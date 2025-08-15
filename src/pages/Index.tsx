@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, BookOpen, Users, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -35,9 +36,11 @@ const Index = () => {
               Swipe through amazing books, match with fellow readers, and discover your next favorite read together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Start Swiping Books
-              </Button>
+              <Link to="/swipe">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Start Swiping Books
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 Learn More
               </Button>
@@ -136,9 +139,11 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Find Your Next Favorite Book?</h2>
           <p className="text-xl mb-8 opacity-90">Join BookSwipe today and connect with fellow book enthusiasts.</p>
-          <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
-            Start Your Book Journey
-          </Button>
+          <Link to="/swipe">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+              Start Your Book Journey
+            </Button>
+          </Link>
         </div>
       </section>
 
