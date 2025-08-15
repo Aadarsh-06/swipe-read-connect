@@ -16,6 +16,8 @@ export const useBooks = () => {
   const [currentBookIndex, setCurrentBookIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
     fetchBooks();
@@ -40,10 +42,21 @@ export const useBooks = () => {
   };
 
   const swipeBook = (direction: 'left' | 'right') => {
+    // Prevent multiple swipes during animation
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    setSwipeDirection(direction);
+    
     // You can add logic here to save user preferences
     console.log(`Swiped ${direction} on book: ${books[currentBookIndex]?.["Book-Title"]}`);
     
-    setCurrentBookIndex(prev => prev + 1);
+    // Wait for animation to complete before showing next book
+    setTimeout(() => {
+      setCurrentBookIndex(prev => prev + 1);
+      setIsAnimating(false);
+      setSwipeDirection(null);
+    }, 600);
   };
 
   const currentBook = books[currentBookIndex];
@@ -56,6 +69,8 @@ export const useBooks = () => {
     error,
     swipeBook,
     totalBooks: books.length,
-    currentIndex: currentBookIndex
+    currentIndex: currentBookIndex,
+    isAnimating,
+    swipeDirection
   };
 };
