@@ -68,20 +68,21 @@ async function ensureProfile(user: User): Promise<void> {
   try {
     const { data: existing, error: selectError } = await supabase
       .from("profiles")
-      .select("id")
+      .select("id, display_name")
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle();
 
     if (selectError) {
-      // Allow proceeding if not found error is thrown differently
       // eslint-disable-next-line no-console
       console.warn("Profile select error:", selectError.message);
     }
 
     if (!existing) {
-      const displayName = (user.user_metadata as any)?.full_name || user.email || "Reader";
-      const avatarUrl = (user.user_metadata as any)?.avatar_url || null;
+      const meta: any = user.user_metadata || {};
+      const emailLocal = user.email ? String(user.email).split('@')[0] : undefined;
+      const displayName = meta.preferred_username || meta.user_name || meta.full_name || emailLocal || "Reader";
+      const avatarUrl = meta.avatar_url || null;
       const { error: insertError } = await supabase.from("profiles").insert({
         user_id: user.id,
         display_name: displayName,

@@ -3,8 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, BookOpen, Users, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import booksBackground from "@/assets/books-background.jpg";
+import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 const Index = () => {
+  const { profile } = useProfile();
+  const { user, signOut } = useAuth();
+
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat relative"
@@ -20,16 +27,40 @@ const Index = () => {
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">Bookble</span>
           </div>
-          <div className="space-x-2">
+          <div className="flex items-center gap-2">
             <Link to="/community">
               <Button variant="ghost">Community</Button>
             </Link>
-            <Link to="/signin">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/signup">
-              <Button variant="ghost">Sign Up</Button>
-            </Link>
+            {user && profile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-muted">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback>{(profile.display_name || 'R')[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium max-w-[120px] truncate">{profile.display_name || 'Reader'}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Signed in</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/signin">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="ghost">Sign Up</Button>
+                </Link>
+              </>
+            )}
             <Link to="/swipe">
               <Button>Start Swiping</Button>
             </Link>

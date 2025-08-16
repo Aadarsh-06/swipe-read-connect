@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import TopMatch from "./pages/TopMatch";
 import SignUp from "./pages/SignUp";
 import AuthCallback from "./pages/AuthCallback";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/top-match" element={<TopMatch />} />
           <Route path="/chat/:recipientId" element={<Chat />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
