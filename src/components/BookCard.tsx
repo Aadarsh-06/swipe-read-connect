@@ -29,6 +29,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | null>(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
   const triedFallbacksRef = useRef<number>(0);
+  const svgPlaceholderDataUri = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='640' height='960'><rect width='100%' height='100%' fill='#e2e8f0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='#64748b'>No Cover</text></svg>`);
 
   useEffect(() => {
     setImgSrc(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
@@ -41,7 +42,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
       book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-L.jpg` : undefined,
       book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-M.jpg` : undefined,
       book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-S.jpg` : undefined,
-      "/fallback-cover.jpg"
+      svgPlaceholderDataUri
     ].filter(Boolean) as string[];
     const next = candidates[triedFallbacksRef.current] || null;
     setImgSrc(next);
@@ -131,7 +132,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
 
         <div className="h-full flex flex-col">
           {/* Cover full-bleed area */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 z-0">
             {imgSrc ? (
               <img 
                 src={imgSrc}
@@ -153,35 +154,16 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           </div>
           
           {/* Footer area */}
-          <div className="relative">
-            <div className="p-4 space-y-1 bg-gradient-to-t from-background/95 to-background/60">
-              <h3 className="font-bold text-base leading-tight line-clamp-2 text-foreground">
-                {book["Book-Title"]}
-              </h3>
-              <p className="text-muted-foreground text-sm">
-                by {book["Book-Author"]}
-              </p>
-              <div className="flex justify-between items-center text-xs text-muted-foreground">
-                <span>{book["Publisher"] || ''}</span>
-                <span>{book["Year-Of-Publication"] || ''}</span>
-              </div>
-            </div>
-            {/* Sliding details panel */}
-            <div
-              className={`absolute left-0 right-0 bg-background/95 backdrop-blur border-t p-4 transition-transform duration-300 ease-out ${detailsOpen ? 'translate-y-0' : 'translate-y-full'}`}
-            >
-              {book.summary && (
-                <div className="mb-2">
-                  <div className="font-semibold mb-1">Summary</div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.summary}</p>
-                </div>
-              )}
-              {book.authorBio && (
-                <div>
-                  <div className="font-semibold mb-1">About the author</div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.authorBio}</p>
-                </div>
-              )}
+          <div className="p-4 space-y-1 bg-gradient-to-t from-background/95 to-background/60">
+            <h3 className="font-bold text-base leading-tight line-clamp-2 text-foreground">
+              {book["Book-Title"]}
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              by {book["Book-Author"]}
+            </p>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{book["Publisher"] || ''}</span>
+              <span>{book["Year-Of-Publication"] || ''}</span>
             </div>
           </div>
           
@@ -208,6 +190,25 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
               Love
             </button>
           </div>
+        </div>
+
+        {/* Sliding details panel (card-level) */}
+        <div
+          className={`absolute left-0 right-0 bottom-0 z-20 bg-background/95 backdrop-blur border-t p-4 rounded-t-xl shadow-lg transition-transform duration-300 ease-out ${detailsOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {book.summary && (
+            <div className="mb-2">
+              <div className="font-semibold mb-1">Summary</div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">{book.summary}</p>
+            </div>
+          )}
+          {book.authorBio && (
+            <div>
+              <div className="font-semibold mb-1">About the author</div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-40 overflow-y-auto">{book.authorBio}</p>
+            </div>
+          )}
         </div>
       </Card>
     </div>
