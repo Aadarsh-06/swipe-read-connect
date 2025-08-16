@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 
 interface MessageRow {
   id: string;
@@ -15,10 +15,12 @@ interface MessageRow {
   created_at: string;
 }
 
+type Message = MessageRow & { pending?: boolean };
+
 const Chat = () => {
   const { user } = useAuth();
   const { recipientId } = useParams<{ recipientId: string }>();
-  const [messages, setMessages] = useState<MessageRow[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -40,7 +42,13 @@ const Chat = () => {
       .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`)
       .order("created_at", { ascending: true });
     if (data) {
-      setMessages(data);
+      setMessages((prev) => {
+        // Keep any pending local messages that are not yet in DB
+        const pending = prev.filter((m) => m.pending);
+        const merged = [...data, ...pending];
+        merged.sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+        return merged;
+      });
     }
   };
 
@@ -63,13 +71,23 @@ const Chat = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` }, (payload) => {
         const row = payload.new as MessageRow;
         if (conversationFilter(row)) {
-          setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a,b) => a.created_at.localeCompare(b.created_at)));
+          setMessages((prev) => {
+            // Replace pending temp if same content and recent
+            const tempIdx = prev.findIndex((m) => m.pending && m.content === row.content && m.sender_id === row.sender_id);
+            if (tempIdx !== -1) {
+              const clone = [...prev];
+              clone[tempIdx] = { ...row };
+              return clone.sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+            }
+            if (prev.some(m => m.id === row.id)) return prev;
+            return [...prev, row].sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+          });
         }
       })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${recipientId}` }, (payload) => {
         const row = payload.new as MessageRow;
         if (conversationFilter(row)) {
-          setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a,b) => a.created_at.localeCompare(b.created_at)));
+          setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || '')));
         }
       })
       .subscribe((status) => {
@@ -111,8 +129,39 @@ const Chat = () => {
 
   const send = async () => {
     if (!user || !recipientId || !text.trim()) return;
-    await supabase.from("messages").insert({ sender_id: user.id, recipient_id: recipientId, content: text.trim() });
+    const content = text.trim();
+    const tempId = `temp-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    // Optimistic append
+    setMessages((prev) => [...prev, { id: tempId, sender_id: user.id, recipient_id: recipientId, content, created_at: now, pending: true }]);
     setText("");
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    // Persist
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({ sender_id: user.id, recipient_id: recipientId, content })
+      .select("id,sender_id,recipient_id,content,created_at")
+      .single();
+
+    if (!error && data) {
+      // Reconcile pending temp with actual row
+      setMessages((prev) => {
+        const idx = prev.findIndex((m) => m.id === tempId);
+        if (idx !== -1) {
+          const clone = [...prev];
+          clone[idx] = data;
+          return clone.sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+        }
+        // If not found (realtime already added it), ensure no duplicates
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [...prev, data].sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+      });
+    } else {
+      // Mark as failed (or remove)
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, pending: false } : m)));
+    }
   };
 
   if (!user) {
@@ -146,7 +195,14 @@ const Chat = () => {
             {messages.map((m) => (
               <div key={m.id} className={`max-w-[80%] px-3 py-2 rounded-xl ${m.sender_id === user.id ? 'bg-primary text-primary-foreground ml-auto' : 'bg-muted'}`}>
                 <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                <div className="text-[10px] opacity-70 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+                <div className="flex items-center gap-2 text-[10px] opacity-80 mt-1">
+                  <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  {m.sender_id === user.id && (
+                    <span className="inline-flex items-center gap-1">
+                      <Check className="h-3 w-3" /> {m.pending ? 'Sending…' : 'Sent'}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             <div ref={bottomRef} />
