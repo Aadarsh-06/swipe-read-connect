@@ -5,12 +5,15 @@ import { BookOpen, ArrowLeft, Heart, X, RotateCcw, Users, MessageCircle } from "
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 
 const Swipe = () => {
   const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount } = useBooks();
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedCount, setMatchedCount] = useState(0);
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (lastMatchUserIds && lastMatchUserIds.length > 0) {
@@ -23,6 +26,37 @@ const Swipe = () => {
     if (totalBooks === 0) return 0;
     return Math.round(((likesCount || 0) / totalBooks) * 100);
   }, [likesCount, totalBooks]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-violet-500/10 via-background to-pink-500/10 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <BookOpen className="h-16 w-16 text-primary mx-auto mb-6 animate-pulse" />
+            <div className="absolute inset-0 h-16 w-16 mx-auto border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Preparing your experience...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>Sign in to start swiping</CardTitle>
+            <CardDescription>Your likes will be saved and matched with other readers.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            <Link to="/signin"><Button>Sign In</Button></Link>
+            <Link to="/signup"><Button variant="outline">Create an account</Button></Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

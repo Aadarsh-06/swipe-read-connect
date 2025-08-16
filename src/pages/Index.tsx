@@ -27,6 +27,9 @@ const Index = () => {
             <Link to="/signin">
               <Button variant="ghost">Sign In</Button>
             </Link>
+            <Link to="/signup">
+              <Button variant="ghost">Sign Up</Button>
+            </Link>
             <Link to="/swipe">
               <Button>Start Swiping</Button>
             </Link>

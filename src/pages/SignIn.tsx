@@ -3,10 +3,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import booksBackground from "@/assets/books-background.jpg";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const SignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { signInWithGoogle } = useAuth();
+
+  const onSubmit = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate("/");
+    } catch (e: any) {
+      setError(e?.message || "Sign in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div 
       className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative"
@@ -35,6 +59,8 @@ const SignIn = () => {
                 type="email" 
                 placeholder="Enter your email"
                 className="bg-input/80"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -44,10 +70,14 @@ const SignIn = () => {
                 type="password" 
                 placeholder="Enter your password"
                 className="bg-input/80"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') onSubmit(); }}
               />
             </div>
-            <Button className="w-full" size="lg">
-              Sign In
+            {error && <div className="text-destructive text-sm">{error}</div>}
+            <Button className="w-full" size="lg" disabled={loading} onClick={onSubmit}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
             <div className="text-center">
               <Button variant="link" className="text-sm">
@@ -62,7 +92,7 @@ const SignIn = () => {
                 <span className="bg-card px-2 text-muted-foreground">or</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" size="lg">
+            <Button variant="outline" className="w-full" size="lg" onClick={() => signInWithGoogle()}>
               Continue with Google
             </Button>
             <div className="text-center text-sm">
