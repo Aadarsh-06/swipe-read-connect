@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Swipe from "./pages/Swipe";
 import SignIn from "./pages/SignIn";
 import NotFound from "./pages/NotFound";
+import Community from "./pages/Community";
+import Chat from "./pages/Chat";
+import TopMatch from "./pages/TopMatch";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +23,9 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/swipe" element={<Swipe />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/community" element={<Community />} />
+          <Route path="/top-match" element={<TopMatch />} />
+          <Route path="/chat/:recipientId" element={<Chat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

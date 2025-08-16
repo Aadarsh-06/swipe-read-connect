@@ -21,6 +21,9 @@ const Index = () => {
             <span className="text-xl font-bold">Bookble</span>
           </div>
           <div className="space-x-2">
+            <Link to="/community">
+              <Button variant="ghost">Community</Button>
+            </Link>
             <Link to="/signin">
               <Button variant="ghost">Sign In</Button>
             </Link>
