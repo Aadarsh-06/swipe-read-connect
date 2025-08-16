@@ -117,7 +117,7 @@ const Swipe = () => {
 
       {/* Header */}
       <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border/50 z-50">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             <BookOpen className="h-8 w-8 text-primary" />
@@ -135,21 +135,21 @@ const Swipe = () => {
 
       {/* Main Swipe Area */}
       <main className="pt-20 pb-8 flex flex-col items-center justify-center min-h-screen relative">
-        <div className="w-full max-w-sm mx-auto px-4">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto px-4">
           {currentBook && (
             <>
               {/* Title Section */}
-              <div className="text-center mb-8 animate-fade-in">
-                <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              <div className="text-center mb-6 sm:mb-8 animate-fade-in">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   Discover Your Next Read
                 </h1>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-muted-foreground text-base sm:text-lg">
                   Drag or use buttons to swipe
                 </p>
               </div>
               
               {/* Book Card */}
-              <div className="relative h-[600px] mb-8">
+              <div className="relative h-[70vh] max-h-[720px] min-h-[420px] mb-6 sm:mb-8">
                 <BookCard 
                   book={currentBook} 
                   onSwipe={swipeBook}
