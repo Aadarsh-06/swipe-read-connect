@@ -19,6 +19,23 @@ const TopMatch = () => {
   const [top, setTop] = useState<MatchScore | null>(null);
   const navigate = useNavigate();
 
+  const computeBlend = (sharedCount: number) => {
+    const raw = 50 + sharedCount * 10;
+    return Math.max(50, Math.min(100, raw));
+  };
+
+  const BlendCircle = ({ value }: { value: number }) => {
+    const clamped = Math.max(50, Math.min(100, value));
+    const gradient = `conic-gradient(var(--tw-gradient-to, #22c55e) ${clamped}%, rgba(0,0,0,0.08) ${clamped}% 100%)`;
+    return (
+      <div className="relative w-16 h-16" aria-label={`Blend score ${clamped}%`}>
+        <div className="absolute inset-0 rounded-full" style={{ backgroundImage: gradient }} />
+        <div className="absolute inset-1 rounded-full bg-card border" />
+        <div className="absolute inset-0 flex items-center justify-center text-base font-semibold">{clamped}%</div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -97,6 +114,8 @@ const TopMatch = () => {
     );
   }
 
+  const blend = computeBlend(top.count);
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
@@ -108,7 +127,8 @@ const TopMatch = () => {
           <CardTitle>{top.display_name || 'Reader'}</CardTitle>
           <CardDescription>{top.count} shared likes</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2">
+        <CardContent className="flex flex-col gap-4 items-center">
+          <BlendCircle value={blend} />
           <Button onClick={() => navigate(`/chat/${top.user_id}`)}>Message this reader</Button>
           <Link to="/community"><Button variant="outline">Back to Community</Button></Link>
         </CardContent>

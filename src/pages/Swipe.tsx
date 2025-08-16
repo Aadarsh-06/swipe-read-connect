@@ -1,7 +1,7 @@
 import { BookCard } from "@/components/BookCard";
 import { useBooks } from "@/hooks/useBooks";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Heart, X, RotateCcw, Users, MessageCircle } from "lucide-react";
+import { BookOpen, ArrowLeft, Heart, Star, X, RotateCcw, Users, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -200,6 +200,13 @@ const Swipe = () => {
                   className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
                 >
                   <X className="h-8 w-8" />
+                </button>
+                <button
+                  onClick={() => swipeBook('right')}
+                  disabled={isAnimating}
+                  className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
+                >
+                  <Star className="h-8 w-8" />
                 </button>
                 <button
                   onClick={() => swipeBook('right')}
