@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { Heart, X } from "lucide-react";
+import * as React from "react";
 
 interface Book {
   id: number;
@@ -23,19 +24,19 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     setIsDragging(true);
     const startX = e.clientX;
     const startY = e.clientY;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (!isDragging) return;
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
       setDragOffset({ x: deltaX, y: deltaY });
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setIsDragging(false);
       const threshold = 100;
       
@@ -45,12 +46,12 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
         setDragOffset({ x: 0, y: 0 });
       }
       
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
   };
 
   const getTransform = () => {
@@ -77,13 +78,13 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
   return (
     <div className="relative w-full h-full flex items-center justify-center">
       <Card 
-        className="relative w-80 h-[600px] cursor-grab active:cursor-grabbing overflow-hidden bg-card border-2 shadow-2xl transition-all duration-300 select-none"
+        className="relative w-full h-full cursor-grab active:cursor-grabbing overflow-hidden bg-card border-2 shadow-2xl transition-all duration-300 select-none touch-none"
         style={{
           transform: getTransform(),
           opacity: getOpacity(),
           transition: isAnimating ? 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out' : isDragging ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out'
         }}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
       >
         {/* Swipe Indicators */}
         {isDragging && (
