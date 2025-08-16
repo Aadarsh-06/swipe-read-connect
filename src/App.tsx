@@ -11,6 +11,7 @@ import Community from "./pages/Community";
 import Chat from "./pages/Chat";
 import TopMatch from "./pages/TopMatch";
 import SignUp from "./pages/SignUp";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/swipe" element={<Swipe />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/community" element={<Community />} />
           <Route path="/top-match" element={<TopMatch />} />
           <Route path="/chat/:recipientId" element={<Chat />} />

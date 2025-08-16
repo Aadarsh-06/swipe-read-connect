@@ -24,48 +24,38 @@ const Community = () => {
     if (!user) return;
     const load = async () => {
       setLoading(true);
-      // Aggregate matches by other user and count of shared liked books
-      const { data: rawMatches, error } = await supabase.rpc("", {} as any);
-      // Supabase free tier: emulate RPC in client with queries
+      // Read matches the current user is part of (RLS allows this)
+      const { data: myMatches, error } = await supabase
+        .from("matches")
+        .select("user1_id,user2_id,book_id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
       if (error) {
-        // Fallback client-side aggregation
-        const { data: likes, error: likesErr } = await supabase
-          .from("user_book_preferences")
-          .select("book_id")
-          .eq("user_id", user.id)
-          .eq("preference", true);
-        if (!likesErr && likes && likes.length > 0) {
-          const likedIds = likes.map(l => l.book_id);
-          const { data: otherLikes } = await supabase
-            .from("user_book_preferences")
-            .select("user_id, book_id")
-            .in("book_id", likedIds)
-            .neq("user_id", user.id)
-            .eq("preference", true);
-          const counts = new Map<string, number>();
-          for (const row of otherLikes || []) {
-            counts.set(row.user_id, (counts.get(row.user_id) || 0) + 1);
-          }
-          const otherUserIds = Array.from(counts.keys());
-          if (otherUserIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from("profiles")
-              .select("user_id, display_name, avatar_url")
-              .in("user_id", otherUserIds);
-            const items: MatchItem[] = (profiles || []).map(p => ({
-              user_id: p.user_id as string,
-              display_name: p.display_name,
-              avatar_url: p.avatar_url,
-              book_count: counts.get(p.user_id as string) || 0,
-            })).sort((a, b) => b.book_count - a.book_count);
-            setMatches(items);
-          } else {
-            setMatches([]);
-          }
-        } else {
-          setMatches([]);
-        }
+        setMatches([]);
+        setLoading(false);
+        return;
       }
+      const counts = new Map<string, number>();
+      for (const m of myMatches || []) {
+        const other = m.user1_id === user.id ? m.user2_id : m.user1_id;
+        counts.set(other, (counts.get(other) || 0) + 1);
+      }
+      const otherIds = Array.from(counts.keys());
+      if (otherIds.length === 0) {
+        setMatches([]);
+        setLoading(false);
+        return;
+      }
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", otherIds);
+      const items: MatchItem[] = (profiles || []).map(p => ({
+        user_id: p.user_id as string,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+        book_count: counts.get(p.user_id as string) || 0,
+      })).sort((a, b) => b.book_count - a.book_count);
+      setMatches(items);
       setLoading(false);
     };
     load();
