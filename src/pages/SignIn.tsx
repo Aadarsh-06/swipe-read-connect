@@ -21,9 +21,9 @@ const SignIn = () => {
     try {
       setLoading(true);
       setError(null);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate("/");
+      if (data?.session) navigate("/");
     } catch (e: any) {
       setError(e?.message || "Sign in failed");
     } finally {

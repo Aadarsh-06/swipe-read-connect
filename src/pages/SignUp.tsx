@@ -26,7 +26,11 @@ const SignUp = () => {
       setInfo(null);
       if (!email || !password) throw new Error("Email and password are required");
       if (password !== confirm) throw new Error("Passwords do not match");
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      });
       if (error) throw error;
       if (data.session) {
         navigate("/");
