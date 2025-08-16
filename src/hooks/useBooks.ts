@@ -29,7 +29,7 @@ export const useBooks = () => {
       const { data, error } = await supabase
         .from('BOOKS')
         .select('*')
-        .limit(50);
+        .limit(15);
 
       if (error) throw error;
       
