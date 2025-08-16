@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { curatedBooks, syncCuratedBooks, CuratedBook } from '@/data/books';
 
 interface Book {
   id: number;
   "Book-Title": string;
   "Book-Author": string;
-  "Publisher": string;
-  "Year-Of-Publication": number;
+  "Publisher": string | null;
+  "Year-Of-Publication": number | null;
   "Image-URL-S": string;
   "ISBN": string;
+  summary?: string;
+  authorBio?: string;
 }
 
 export const useBooks = () => {
@@ -30,13 +33,21 @@ export const useBooks = () => {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('BOOKS')
-        .select('*')
-        .limit(15);
-
-      if (error) throw error;
-      setBooks(data || []);
+      // Sync curated books to Supabase BOOKS table by ISBN; then map enriched data
+      const curated = await syncCuratedBooks();
+      // Build Book objects in the expected shape
+      const mapped: Book[] = curated.map((c: CuratedBook) => ({
+        id: (c.id as number) ?? Math.floor(Math.random() * 1_000_000),
+        "Book-Title": c.title,
+        "Book-Author": c.author,
+        Publisher: c.publisher ?? null,
+        "Year-Of-Publication": c.year ?? null,
+        "Image-URL-S": c.imageUrl,
+        "ISBN": c.isbn,
+        summary: c.summary,
+        authorBio: c.authorBio,
+      }));
+      setBooks(mapped.slice(0, 15));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -54,22 +65,16 @@ export const useBooks = () => {
       console.warn('Failed to persist preference', error.message);
     }
     if (liked) {
-      // After inserting like, check if any matches created that involve this user and book
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select('user1_id,user2_id,book_id')
         .eq('book_id', bookId)
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
       if (!matchesError && matchesData) {
-        // Find the other user ids in those matches
         const others = matchesData
           .map(m => (m.user1_id === user.id ? m.user2_id : m.user1_id))
           .filter(Boolean);
-        if (others.length > 0) {
-          setLastMatchUserIds(others);
-        } else {
-          setLastMatchUserIds(null);
-        }
+        setLastMatchUserIds(others.length > 0 ? others : null);
       }
     }
     return null;
@@ -84,7 +89,6 @@ export const useBooks = () => {
     const current = books[currentBookIndex];
     const liked = direction === 'right';
 
-    // Save user preference asynchronously
     if (current) {
       persistPreference(current.id, liked).catch(() => {});
       if (liked) setLikesCount(prev => prev + 1);

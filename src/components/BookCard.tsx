@@ -1,15 +1,18 @@
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
-import { Heart, X } from "lucide-react";
+import { Heart, X, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Book {
   id: number;
   "Book-Title": string;
   "Book-Author": string;
-  "Publisher": string;
-  "Year-Of-Publication": number;
+  "Publisher": string | null;
+  "Year-Of-Publication": number | null;
   "Image-URL-S": string;
   "ISBN": string;
+  summary?: string;
+  authorBio?: string;
 }
 
 interface BookCardProps {
@@ -22,6 +25,7 @@ interface BookCardProps {
 export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [open, setOpen] = useState(false);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -84,6 +88,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           transition: isAnimating ? 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out' : isDragging ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out'
         }}
         onMouseDown={handleMouseDown}
+        onDoubleClick={() => setOpen(true)}
       >
         {/* Swipe Indicators */}
         {isDragging && (
@@ -106,40 +111,45 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
         )}
 
         <div className="h-full flex flex-col">
-          {/* Book Image */}
-          <div className="flex-1 p-6 flex items-center justify-center bg-gradient-to-br from-background to-muted/30">
+          {/* Cover full-bleed area */}
+          <div className="relative flex-1">
             {book["Image-URL-S"] ? (
               <img 
                 src={book["Image-URL-S"]} 
                 alt={book["Book-Title"]}
-                className="max-h-80 max-w-full object-contain shadow-lg rounded-lg"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
+                className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onDoubleClick={(e) => { e.stopPropagation(); setOpen(true); }}
               />
             ) : (
-              <div className="w-48 h-72 bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center shadow-inner">
+              <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                 <span className="text-muted-foreground text-lg font-medium">No Image</span>
               </div>
             )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+              className="absolute bottom-3 right-3 bg-background/80 backdrop-blur px-3 py-1 rounded-full text-xs border flex items-center gap-1 hover:bg-background"
+            >
+              <Info className="h-3 w-3" /> Details
+            </button>
           </div>
           
-          {/* Book Details */}
-          <div className="p-6 space-y-3 bg-gradient-to-t from-background to-background/95">
-            <h3 className="font-bold text-xl leading-tight line-clamp-2 text-foreground">
+          {/* Book Details (overlay footer) */}
+          <div className="p-4 space-y-1 bg-gradient-to-t from-background/95 to-background/60">
+            <h3 className="font-bold text-base leading-tight line-clamp-2 text-foreground">
               {book["Book-Title"]}
             </h3>
-            <p className="text-muted-foreground text-base font-medium">
+            <p className="text-muted-foreground text-sm">
               by {book["Book-Author"]}
             </p>
-            <div className="flex justify-between items-center text-sm text-muted-foreground">
-              <span>{book["Publisher"]}</span>
-              <span>{book["Year-Of-Publication"]}</span>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{book["Publisher"] || ''}</span>
+              <span>{book["Year-Of-Publication"] || ''}</span>
             </div>
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-4 p-6 pt-0">
+          <div className="flex gap-4 p-4 pt-0">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -163,6 +173,33 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           </div>
         </div>
       </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{book["Book-Title"]}</DialogTitle>
+            <DialogDescription>by {book["Book-Author"]}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {book["Image-URL-S"] && (
+              <img src={book["Image-URL-S"]} alt={book["Book-Title"]} className="w-full h-64 object-cover rounded-md" />
+            )}
+            {book.summary && (
+              <div>
+                <div className="font-semibold mb-1">Summary</div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.summary}</p>
+              </div>
+            )}
+            {book.authorBio && (
+              <div>
+                <div className="font-semibold mb-1">About the author</div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.authorBio}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
