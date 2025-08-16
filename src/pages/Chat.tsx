@@ -21,38 +21,87 @@ const Chat = () => {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const conversationFilter = (row: MessageRow) => {
+    if (!user || !recipientId) return false;
+    return (
+      (row.sender_id === user.id && row.recipient_id === recipientId) ||
+      (row.sender_id === recipientId && row.recipient_id === user.id)
+    );
+  };
+
+  const loadMessages = async () => {
+    if (!user || !recipientId) return;
+    const { data } = await supabase
+      .from("messages")
+      .select("id,sender_id,recipient_id,content,created_at")
+      .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`)
+      .order("created_at", { ascending: true });
+    if (data) {
+      setMessages(data);
+    }
+  };
 
   useEffect(() => {
     if (!user || !recipientId) return;
-    let isCancelled = false;
 
-    const load = async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("id,sender_id,recipient_id,content,created_at")
-        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${user.id})`)
-        .order("created_at", { ascending: true });
-      if (!isCancelled) setMessages(data || []);
-    };
+    // Initial load
+    loadMessages();
 
-    load();
+    // Clear previous channel if any
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
 
-    const channel = supabase
-      .channel("chat-" + recipientId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+    // Subscribe to realtime inserts in both directions with filters
+    const channel = supabase.channel(`chat-${user.id}-${recipientId}`);
+
+    channel
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` }, (payload) => {
         const row = payload.new as MessageRow;
-        if (
-          (row.sender_id === user.id && row.recipient_id === recipientId) ||
-          (row.sender_id === recipientId && row.recipient_id === user.id)
-        ) {
-          setMessages((prev) => [...prev, row]);
+        if (conversationFilter(row)) {
+          setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a,b) => a.created_at.localeCompare(b.created_at)));
         }
       })
-      .subscribe();
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${recipientId}` }, (payload) => {
+        const row = payload.new as MessageRow;
+        if (conversationFilter(row)) {
+          setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a,b) => a.created_at.localeCompare(b.created_at)));
+        }
+      })
+      .subscribe((status) => {
+        // Fallback polling if subscription fails or disconnects
+        if (status !== "SUBSCRIBED") {
+          if (!pollRef.current) {
+            pollRef.current = setInterval(loadMessages, 2000);
+          }
+        } else {
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        }
+      });
+
+    channelRef.current = channel;
+
+    // Fallback polling safety net
+    if (!pollRef.current) {
+      pollRef.current = setInterval(loadMessages, 4000);
+    }
 
     return () => {
-      isCancelled = true;
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     };
   }, [user, recipientId]);
 
