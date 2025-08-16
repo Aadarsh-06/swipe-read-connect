@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Heart, X, Info } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Book {
   id: number;
@@ -10,6 +9,8 @@ interface Book {
   "Publisher": string | null;
   "Year-Of-Publication": number | null;
   "Image-URL-S": string;
+  "Image-URL-M"?: string;
+  "Image-URL-L"?: string;
   "ISBN": string;
   summary?: string;
   authorBio?: string;
@@ -25,7 +26,26 @@ interface BookCardProps {
 export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [open, setOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string | null>(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
+  const triedFallbacksRef = useRef<number>(0);
+
+  useEffect(() => {
+    setImgSrc(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
+    triedFallbacksRef.current = 0;
+  }, [book.id]);
+
+  const tryNextFallback = () => {
+    triedFallbacksRef.current += 1;
+    const candidates = [book["Image-URL-L"], book["Image-URL-M"], book["Image-URL-S"],
+      book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-L.jpg` : undefined,
+      book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-M.jpg` : undefined,
+      book["ISBN"] ? `https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-S.jpg` : undefined,
+      "/fallback-cover.jpg"
+    ].filter(Boolean) as string[];
+    const next = candidates[triedFallbacksRef.current] || null;
+    setImgSrc(next);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -60,10 +80,10 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
   const getTransform = () => {
     if (isAnimating && swipeDirection) {
       const direction = swipeDirection === 'right' ? 1 : -1;
-      return `translateX(${direction * 100}vw) rotate(${direction * 30}deg)`;
+      return `translateX(${direction * 120}vw) rotate(${direction * 22}deg)`;
     }
     if (isDragging) {
-      const rotation = dragOffset.x * 0.1;
+      const rotation = dragOffset.x * 0.06;
       return `translateX(${dragOffset.x}px) translateY(${dragOffset.y}px) rotate(${rotation}deg)`;
     }
     return 'translateX(0px) translateY(0px) rotate(0deg)';
@@ -73,7 +93,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
     if (isAnimating) return 0;
     if (isDragging) {
       const opacity = 1 - Math.abs(dragOffset.x) / 300;
-      return Math.max(0.3, opacity);
+      return Math.max(0.4, opacity);
     }
     return 1;
   };
@@ -85,10 +105,9 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
         style={{
           transform: getTransform(),
           opacity: getOpacity(),
-          transition: isAnimating ? 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease-out' : isDragging ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out'
+          transition: isAnimating ? 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease-out' : isDragging ? 'none' : 'transform 0.25s ease-out, opacity 0.25s ease-out'
         }}
         onMouseDown={handleMouseDown}
-        onDoubleClick={() => setOpen(true)}
       >
         {/* Swipe Indicators */}
         {isDragging && (
@@ -113,13 +132,12 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
         <div className="h-full flex flex-col">
           {/* Cover full-bleed area */}
           <div className="relative flex-1">
-            {book["Image-URL-S"] ? (
+            {imgSrc ? (
               <img 
-                src={book["Image-URL-S"]} 
+                src={imgSrc}
                 alt={book["Book-Title"]}
                 className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                onDoubleClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                onError={tryNextFallback}
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
@@ -127,24 +145,43 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
               </div>
             )}
             <button
-              onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+              onClick={(e) => { e.stopPropagation(); setDetailsOpen((s) => !s); }}
               className="absolute bottom-3 right-3 bg-background/80 backdrop-blur px-3 py-1 rounded-full text-xs border flex items-center gap-1 hover:bg-background"
             >
               <Info className="h-3 w-3" /> Details
             </button>
           </div>
           
-          {/* Book Details (overlay footer) */}
-          <div className="p-4 space-y-1 bg-gradient-to-t from-background/95 to-background/60">
-            <h3 className="font-bold text-base leading-tight line-clamp-2 text-foreground">
-              {book["Book-Title"]}
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              by {book["Book-Author"]}
-            </p>
-            <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>{book["Publisher"] || ''}</span>
-              <span>{book["Year-Of-Publication"] || ''}</span>
+          {/* Footer area */}
+          <div className="relative">
+            <div className="p-4 space-y-1 bg-gradient-to-t from-background/95 to-background/60">
+              <h3 className="font-bold text-base leading-tight line-clamp-2 text-foreground">
+                {book["Book-Title"]}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                by {book["Book-Author"]}
+              </p>
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>{book["Publisher"] || ''}</span>
+                <span>{book["Year-Of-Publication"] || ''}</span>
+              </div>
+            </div>
+            {/* Sliding details panel */}
+            <div
+              className={`absolute left-0 right-0 bg-background/95 backdrop-blur border-t p-4 transition-transform duration-300 ease-out ${detailsOpen ? 'translate-y-0' : 'translate-y-full'}`}
+            >
+              {book.summary && (
+                <div className="mb-2">
+                  <div className="font-semibold mb-1">Summary</div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.summary}</p>
+                </div>
+              )}
+              {book.authorBio && (
+                <div>
+                  <div className="font-semibold mb-1">About the author</div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.authorBio}</p>
+                </div>
+              )}
             </div>
           </div>
           
@@ -173,33 +210,6 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           </div>
         </div>
       </Card>
-
-      {/* Details Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{book["Book-Title"]}</DialogTitle>
-            <DialogDescription>by {book["Book-Author"]}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            {book["Image-URL-S"] && (
-              <img src={book["Image-URL-S"]} alt={book["Book-Title"]} className="w-full h-64 object-cover rounded-md" />
-            )}
-            {book.summary && (
-              <div>
-                <div className="font-semibold mb-1">Summary</div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.summary}</p>
-              </div>
-            )}
-            {book.authorBio && (
-              <div>
-                <div className="font-semibold mb-1">About the author</div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{book.authorBio}</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

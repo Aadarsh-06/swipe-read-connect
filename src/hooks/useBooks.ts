@@ -10,6 +10,8 @@ interface Book {
   "Publisher": string | null;
   "Year-Of-Publication": number | null;
   "Image-URL-S": string;
+  "Image-URL-M"?: string;
+  "Image-URL-L"?: string;
   "ISBN": string;
   summary?: string;
   authorBio?: string;
@@ -43,6 +45,8 @@ export const useBooks = () => {
         Publisher: c.publisher ?? null,
         "Year-Of-Publication": c.year ?? null,
         "Image-URL-S": c.imageUrl,
+        "Image-URL-M": c.imageUrl,
+        "Image-URL-L": c.imageUrl,
         "ISBN": c.isbn,
         summary: c.summary,
         authorBio: c.authorBio,
