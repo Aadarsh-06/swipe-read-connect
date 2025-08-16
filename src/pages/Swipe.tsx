@@ -1,11 +1,28 @@
 import { BookCard } from "@/components/BookCard";
 import { useBooks } from "@/hooks/useBooks";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Heart, X, RotateCcw } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BookOpen, ArrowLeft, Heart, X, RotateCcw, Users, MessageCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const Swipe = () => {
-  const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection } = useBooks();
+  const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount } = useBooks();
+  const [showMatchDialog, setShowMatchDialog] = useState(false);
+  const [matchedCount, setMatchedCount] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (lastMatchUserIds && lastMatchUserIds.length > 0) {
+      setMatchedCount(prev => prev + lastMatchUserIds.length);
+      setShowMatchDialog(true);
+    }
+  }, [lastMatchUserIds]);
+
+  const matchPercent = useMemo(() => {
+    if (totalBooks === 0) return 0;
+    return Math.round(((likesCount || 0) / totalBooks) * 100);
+  }, [likesCount, totalBooks]);
 
   if (loading) {
     return (
@@ -50,21 +67,22 @@ const Swipe = () => {
             <BookOpen className="h-12 w-12 text-white" />
           </div>
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Amazing job!
+            You finished your swipes!
           </h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            You've explored all {totalBooks} books in our collection. Ready to find some matches?
+          <p className="text-xl text-muted-foreground mb-6">
+            Your reading taste match score: <span className="font-bold text-foreground">{matchPercent}%</span>
           </p>
-          <div className="space-y-4">
-            <Link to="/">
-              <Button size="lg" className="w-full bg-gradient-to-r from-primary to-primary/80">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Home
+          <div className="grid gap-3">
+            <Link to="/community">
+              <Button size="lg" className="w-full">
+                <Users className="h-5 w-5 mr-2" /> Explore Community
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="w-full" onClick={() => window.location.reload()}>
-              <RotateCcw className="h-5 w-5 mr-2" />
-              Start Over
+            <Button variant="outline" size="lg" className="w-full" onClick={() => navigate('/top-match')}>
+              <MessageCircle className="h-5 w-5 mr-2" /> Message Your Top Match
+            </Button>
+            <Button variant="ghost" size="lg" className="w-full" onClick={() => window.location.reload()}>
+              <RotateCcw className="h-5 w-5 mr-2" /> Start Over
             </Button>
           </div>
         </div>
@@ -74,6 +92,22 @@ const Swipe = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-500/10 via-background via-50% to-pink-500/10 overflow-hidden">
+      {/* Match dialog */}
+      <Dialog open={showMatchDialog} onOpenChange={setShowMatchDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>It’s a match! 🎉</DialogTitle>
+            <DialogDescription>
+              You and another reader liked the same book. Start a conversation!
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="secondary" onClick={() => setShowMatchDialog(false)}>Keep Swiping</Button>
+            <Button onClick={() => { setShowMatchDialog(false); navigate('/community'); }}>See Matches</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-violet-400/20 to-pink-400/20 rounded-full blur-xl animate-pulse"></div>
@@ -87,7 +121,7 @@ const Swipe = () => {
           <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               BookSwipe
             </span>
           </Link>
