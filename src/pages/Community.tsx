@@ -20,6 +20,23 @@ const Community = () => {
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const navigate = useNavigate();
 
+  const computeBlend = (sharedCount: number) => {
+    const raw = 50 + sharedCount * 10;
+    return Math.max(50, Math.min(100, raw));
+  };
+
+  const BlendCircle = ({ value }: { value: number }) => {
+    const clamped = Math.max(50, Math.min(100, value));
+    const gradient = `conic-gradient(var(--tw-gradient-to, #22c55e) ${clamped}%, rgba(0,0,0,0.08) ${clamped}% 100%)`;
+    return (
+      <div className="relative w-14 h-14" aria-label={`Blend score ${clamped}%`}>
+        <div className="absolute inset-0 rounded-full" style={{ backgroundImage: gradient }} />
+        <div className="absolute inset-1 rounded-full bg-card border" />
+        <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold">{clamped}%</div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -93,26 +110,32 @@ const Community = () => {
           </CardHeader>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {matches.map((m) => (
-            <Card key={m.user_id} className="flex flex-col">
-              <CardHeader className="flex-row items-center gap-4">
-                <Avatar>
-                  <AvatarImage src={m.avatar_url || undefined} />
-                  <AvatarFallback>{(m.display_name || 'R')[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <CardTitle className="text-base">{m.display_name || 'Reader'}</CardTitle>
-                  <CardDescription>{m.book_count} shared likes</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button className="w-full" onClick={() => navigate(`/chat/${m.user_id}`)}>
-                  <MessageCircle className="h-4 w-4 mr-2" /> Message
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex flex-col gap-4">
+          {matches.map((m) => {
+            const blend = computeBlend(m.book_count);
+            return (
+              <Card key={m.user_id} className="flex flex-col">
+                <CardHeader className="flex-row items-center gap-4 justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar>
+                      <AvatarImage src={m.avatar_url || undefined} />
+                      <AvatarFallback>{(m.display_name || 'R')[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-base">{m.display_name || 'Reader'}</CardTitle>
+                      <CardDescription>{m.book_count} shared likes</CardDescription>
+                    </div>
+                  </div>
+                  <BlendCircle value={blend} />
+                </CardHeader>
+                <CardContent className="mt-auto">
+                  <Button className="w-full" onClick={() => navigate(`/chat/${m.user_id}`)}>
+                    <MessageCircle className="h-4 w-4 mr-2" /> Message
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
