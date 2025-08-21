@@ -27,62 +27,61 @@ const curatedIsbns = [
 ];
 
 async function main() {
-  console.log('Fetching BOOKS to evaluate...');
-  const ids = new Set();
+  const BATCH = parseInt(process.env.BATCH_SIZE || '1000', 10);
+  let totalDeleted = 0;
+  let batchNum = 0;
 
-  // Fetch a broad set and filter client-side to avoid operator quirks
-  const { data: allBooks, error: allErr } = await supabase
-    .from('BOOKS')
-    .select('id, ISBN')
-    .limit(10000);
-  if (allErr) {
-    console.error('Error fetching BOOKS:', allErr.message);
-    process.exitCode = 1;
-    return;
+  while (true) {
+    batchNum += 1;
+    console.log(`Fetching batch #${batchNum} (limit ${BATCH})...`);
+    const { data: batch, error: fetchErr } = await supabase
+      .from('BOOKS')
+      .select('id, ISBN')
+      .order('id', { ascending: true })
+      .limit(BATCH);
+    if (fetchErr) {
+      console.error('Error fetching batch:', fetchErr.message);
+      process.exitCode = 1;
+      return;
+    }
+    const idsArray = (batch || [])
+      .filter((r) => !(r.ISBN && curatedIsbns.includes(r.ISBN)))
+      .map((r) => r.id);
+    if (!idsArray.length) {
+      console.log('No more non-curated books to delete.');
+      break;
+    }
+
+    console.log(`Batch #${batchNum}: deleting ${idsArray.length} books and dependents...`);
+    const { error: prefErr } = await supabase
+      .from('user_book_preferences')
+      .delete()
+      .in('book_id', idsArray);
+    if (prefErr) console.warn('user_book_preferences delete warning:', prefErr.message);
+
+    const { error: matchesErr } = await supabase
+      .from('matches')
+      .delete()
+      .in('book_id', idsArray);
+    if (matchesErr) console.warn('matches delete warning:', matchesErr.message);
+
+    const { error: booksErr } = await supabase
+      .from('BOOKS')
+      .delete()
+      .in('id', idsArray);
+    if (booksErr) {
+      console.error('BOOKS delete error:', booksErr.message);
+      process.exitCode = 1;
+      return;
+    }
+    totalDeleted += idsArray.length;
+    console.log(`Deleted so far: ${totalDeleted}`);
   }
-  (allBooks || []).forEach((r) => {
-    const keep = r.ISBN && curatedIsbns.includes(r.ISBN);
-    if (!keep) ids.add(r.id);
-  });
 
-  const idsArray = Array.from(ids);
-  console.log('Found', idsArray.length, 'BOOKS to delete');
-  if (idsArray.length === 0) {
-    console.log('Nothing to delete. Exiting.');
-    return;
-  }
-
-  // Delete dependent rows first to satisfy FKs / RLS
-  console.log('Deleting dependent user_book_preferences...');
-  const { error: prefErr } = await supabase
-    .from('user_book_preferences')
-    .delete()
-    .in('book_id', idsArray);
-  if (prefErr) console.warn('user_book_preferences delete warning:', prefErr.message);
-
-  console.log('Deleting dependent matches...');
-  const { error: matchesErr } = await supabase
-    .from('matches')
-    .delete()
-    .in('book_id', idsArray);
-  if (matchesErr) console.warn('matches delete warning:', matchesErr.message);
-
-  console.log('Deleting BOOKS rows...');
-  const { error: booksErr } = await supabase
-    .from('BOOKS')
-    .delete()
-    .in('id', idsArray);
-  if (booksErr) {
-    console.error('BOOKS delete error:', booksErr.message);
-    process.exitCode = 1;
-    return;
-  }
-
-  console.log('Cleanup complete.');
+  console.log(`Cleanup complete. Total books deleted: ${totalDeleted}`);
 }
 
 main().catch((e) => {
   console.error('Cleanup failed:', e);
   process.exitCode = 1;
 });
-
