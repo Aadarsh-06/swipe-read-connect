@@ -7,9 +7,28 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const process = async () => {
-      // Supabase handles tokens in URL; trigger a session check then redirect
-      await supabase.auth.getSession();
-      navigate("/", { replace: true });
+      // Handle OAuth callback URL params reliably
+      const hash = window.location.hash;
+      const hasCode = hash.includes("access_token") || window.location.search.includes("code=");
+      if (hasCode) {
+        // exchange if needed (for PKCE/code flow)
+        try {
+          // For hash-based tokens, getSession is enough; for code flow, exchangeCodeForSession
+          if (window.location.search.includes("code=")) {
+            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (error) {
+              // eslint-disable-next-line no-console
+              console.warn('exchangeCodeForSession error', error.message);
+            }
+          } else {
+            await supabase.auth.getSession();
+          }
+        } finally {
+          navigate("/", { replace: true });
+        }
+      } else {
+        navigate("/", { replace: true });
+      }
     };
     process();
   }, [navigate]);

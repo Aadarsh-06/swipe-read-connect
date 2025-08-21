@@ -25,7 +25,8 @@ export const useAuth = (): UseAuthResult => {
         setSession(data.session ?? null);
         setUser(data.session?.user ?? null);
         if (data.session?.user) {
-          await ensureProfile(data.session.user);
+          // Fire-and-forget: do not block initial auth state
+          ensureProfile(data.session.user).catch(() => {});
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -37,7 +38,7 @@ export const useAuth = (): UseAuthResult => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
-        await ensureProfile(newSession.user);
+        ensureProfile(newSession.user).catch(() => {});
       }
     });
 
@@ -51,7 +52,15 @@ export const useAuth = (): UseAuthResult => {
 
   const signInWithGoogle = useMemo(() => {
     return async () => {
-      await supabase.auth.signInWithOAuth({ provider: "google" });
+      await supabase.auth.signInWithOAuth({ 
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account',
+          },
+        }
+      });
     };
   }, []);
 
