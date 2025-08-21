@@ -52,6 +52,13 @@ export const useAuth = (): UseAuthResult => {
 
   const signInWithGoogle = useMemo(() => {
     return async () => {
+      try {
+        // Clear any existing session to force Google account chooser reliably
+        await supabase.auth.signOut();
+      } catch {}
+      try {
+        localStorage.removeItem('sb-auth-token');
+      } catch {}
       await supabase.auth.signInWithOAuth({ 
         provider: "google",
         options: {
