@@ -17,37 +17,57 @@ export const useAuth = (): UseAuthResult => {
 
   useEffect(() => {
     let isMounted = true;
+    let profileCreationInProgress = new Set<string>();
 
     const init = async () => {
       try {
+        console.log('Initializing auth state...');
         const { data } = await supabase.auth.getSession();
         if (!isMounted) return;
-        setSession(data.session ?? null);
-        setUser(data.session?.user ?? null);
-        if (data.session?.user) {
-          // Fire-and-forget: do not block initial auth state
-          ensureProfile(data.session.user).catch(() => {});
+        
+        const session = data.session;
+        console.log('Current session:', session ? 'Found' : 'None');
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user && !profileCreationInProgress.has(session.user.id)) {
+          profileCreationInProgress.add(session.user.id);
+          setTimeout(async () => {
+            await ensureProfile(session.user);
+            profileCreationInProgress.delete(session.user.id);
+          }, 0);
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          console.log('Auth loading complete');
+          setLoading(false);
+        }
       }
     };
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!isMounted) return;
+      
+      console.log('Auth state changed:', event, newSession ? 'Session present' : 'No session');
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      if (newSession?.user) {
-        // Use setTimeout to prevent potential deadlocks
-        setTimeout(() => {
-          ensureProfile(newSession.user!).catch(() => {});
-        }, 0);
+      
+      if (newSession?.user && !profileCreationInProgress.has(newSession.user.id)) {
+        profileCreationInProgress.add(newSession.user.id);
+        setTimeout(async () => {
+          await ensureProfile(newSession.user);
+          profileCreationInProgress.delete(newSession.user.id);
+        }, 100);
       }
     });
 
     init();
 
     return () => {
+      console.log('Cleaning up auth hook...');
       isMounted = false;
       authListener.subscription.unsubscribe();
     };
@@ -78,7 +98,10 @@ export const useAuth = (): UseAuthResult => {
 };
 
 async function ensureProfile(user: User): Promise<void> {
+  if (!user?.id) return;
+  
   try {
+    console.log('Checking profile for user:', user.id);
     const { data: existing, error: selectError } = await supabase
       .from("profiles")
       .select("id, display_name")
@@ -87,11 +110,11 @@ async function ensureProfile(user: User): Promise<void> {
       .maybeSingle();
 
     if (selectError) {
-      // eslint-disable-next-line no-console
       console.warn("Profile select error:", selectError.message);
     }
 
     if (!existing) {
+      console.log('Creating new profile for user:', user.id);
       const meta: any = user.user_metadata || {};
       const emailLocal = user.email ? String(user.email).split('@')[0] : undefined;
       const displayName = meta.preferred_username || meta.user_name || meta.full_name || emailLocal || "Reader";
@@ -102,12 +125,14 @@ async function ensureProfile(user: User): Promise<void> {
         avatar_url: avatarUrl,
       });
       if (insertError) {
-        // eslint-disable-next-line no-console
         console.warn("Profile insert error:", insertError.message);
+      } else {
+        console.log('Profile created successfully for user:', user.id);
       }
+    } else {
+      console.log('Profile already exists for user:', user.id);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn("ensureProfile error", e);
   }
 }
