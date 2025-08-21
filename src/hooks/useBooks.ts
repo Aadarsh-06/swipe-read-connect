@@ -27,6 +27,8 @@ export const useBooks = () => {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [lastMatchUserIds, setLastMatchUserIds] = useState<string[] | null>(null);
   const [likesCount, setLikesCount] = useState<number>(0);
+  // Map ISBN -> Supabase BOOKS.id to avoid extra lookups once resolved
+  const [isbnToSupabaseId, setIsbnToSupabaseId] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchBooks();
@@ -34,12 +36,9 @@ export const useBooks = () => {
 
   const fetchBooks = async () => {
     try {
-      setLoading(true);
-      // Sync curated books to Supabase BOOKS table by ISBN; then map enriched data
-      const curated = await syncCuratedBooks();
-      // Build Book objects in the expected shape
-      const mapped: Book[] = curated.map((c: CuratedBook) => ({
-        id: (c.id as number) ?? Math.floor(Math.random() * 1_000_000),
+      // Immediately render from local curated list for fast first paint
+      const initial: Book[] = curatedBooks.map((c: CuratedBook, index: number) => ({
+        id: (c.id as number) ?? -1 * (index + 1),
         "Book-Title": c.title,
         "Book-Author": c.author,
         Publisher: c.publisher ?? null,
@@ -51,19 +50,84 @@ export const useBooks = () => {
         summary: c.summary,
         authorBio: c.authorBio,
       }));
-      setBooks(mapped.slice(0, 15));
+      setBooks(initial.slice(0, 15));
+      setLoading(false);
+
+      // In the background, sync curated books so we can persist likes reliably
+      const curated = await syncCuratedBooks();
+      const map: Record<string, number> = {};
+      curated.forEach((c) => {
+        if (c.id && c.isbn) map[c.isbn] = c.id;
+      });
+      if (Object.keys(map).length > 0) {
+        setIsbnToSupabaseId(map);
+        // Update the books array with proper Supabase ids where available
+        setBooks((prev) =>
+          prev.map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const persistPreference = async (bookId: number, liked: boolean) => {
+  const ensureBookIdByIsbn = async (book: Book): Promise<number | null> => {
+    const isbn = book["ISBN"];
+    if (isbnToSupabaseId[isbn]) return isbnToSupabaseId[isbn];
+
+    // Try to find existing
+    const { data: existing, error: selectError } = await supabase
+      .from('BOOKS')
+      .select('id')
+      .eq('ISBN', isbn)
+      .maybeSingle();
+
+    if (existing?.id) {
+      setIsbnToSupabaseId((prev) => ({ ...prev, [isbn]: existing.id }));
+      return existing.id;
+    }
+
+    if (selectError && selectError.code && selectError.code !== 'PGRST116') {
+      // eslint-disable-next-line no-console
+      console.warn('BOOKS select error:', selectError.message);
+    }
+
+    // Insert minimal book row if not found
+    const { data: inserted, error: insertError } = await supabase
+      .from('BOOKS')
+      .insert({
+        "Book-Title": book["Book-Title"],
+        "Book-Author": book["Book-Author"],
+        "Image-URL-S": book["Image-URL-S"],
+        "Image-URL-M": book["Image-URL-M"] ?? book["Image-URL-S"],
+        "Image-URL-L": book["Image-URL-L"] ?? book["Image-URL-M"] ?? book["Image-URL-S"],
+        ISBN: isbn,
+        Publisher: book.Publisher,
+        "Year-Of-Publication": book["Year-Of-Publication"],
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (insertError) {
+      // eslint-disable-next-line no-console
+      console.warn('BOOKS insert error:', insertError.message);
+      return null;
+    }
+    if (inserted?.id) {
+      setIsbnToSupabaseId((prev) => ({ ...prev, [isbn]: inserted.id }));
+      return inserted.id;
+    }
+    return null;
+  };
+
+  const persistPreference = async (book: Book, liked: boolean) => {
     if (!user) return null;
+    const resolvedId = await ensureBookIdByIsbn(book);
+    if (!resolvedId) return null;
+
     const { error } = await supabase
       .from('user_book_preferences')
-      .upsert({ user_id: user.id, book_id: bookId, preference: liked }, { onConflict: 'user_id,book_id' });
+      .upsert({ user_id: user.id, book_id: resolvedId, preference: liked }, { onConflict: 'user_id,book_id' });
     if (error) {
       // eslint-disable-next-line no-console
       console.warn('Failed to persist preference', error.message);
@@ -72,7 +136,7 @@ export const useBooks = () => {
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select('user1_id,user2_id,book_id')
-        .eq('book_id', bookId)
+        .eq('book_id', resolvedId)
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
       if (!matchesError && matchesData) {
         const others = matchesData
@@ -94,7 +158,8 @@ export const useBooks = () => {
     const liked = direction === 'right';
 
     if (current) {
-      persistPreference(current.id, liked).catch(() => {});
+      // Persist in the background without blocking animations
+      persistPreference(current, liked).catch(() => {});
       if (liked) setLikesCount(prev => prev + 1);
     }
 

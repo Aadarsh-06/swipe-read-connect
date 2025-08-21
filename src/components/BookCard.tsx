@@ -30,10 +30,12 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
   const [imgSrc, setImgSrc] = useState<string | null>(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
   const triedFallbacksRef = useRef<number>(0);
   const svgPlaceholderDataUri = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='640' height='960'><rect width='100%' height='100%' fill='#e2e8f0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='#64748b'>No Cover</text></svg>`);
+  const [isHighResLoaded, setIsHighResLoaded] = useState(false);
 
   useEffect(() => {
     setImgSrc(book["Image-URL-L"] || book["Image-URL-M"] || book["Image-URL-S"] || null);
     triedFallbacksRef.current = 0;
+    setIsHighResLoaded(false);
   }, [book.id]);
 
   const tryNextFallback = () => {
@@ -134,12 +136,27 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           {/* Cover full-bleed area */}
           <div className="relative flex-1 z-0">
             {imgSrc ? (
-              <img 
-                src={imgSrc}
-                alt={book["Book-Title"]}
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={tryNextFallback}
-              />
+              <picture>
+                {/* Low-res first for faster LCP */}
+                <img
+                  src={book["Image-URL-S"]}
+                  alt=""
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHighResLoaded ? 'opacity-0' : 'opacity-100'}`}
+                  aria-hidden
+                  loading="eager"
+                  decoding="async"
+                />
+                {/* High-res progressive replacement */}
+                <img 
+                  src={imgSrc}
+                  alt={book["Book-Title"]}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={tryNextFallback}
+                  onLoad={() => setIsHighResLoaded(true)}
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                 <span className="text-muted-foreground text-lg font-medium">No Image</span>
