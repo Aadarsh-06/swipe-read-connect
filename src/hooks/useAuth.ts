@@ -33,12 +33,15 @@ export const useAuth = (): UseAuthResult => {
       }
     };
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (!isMounted) return;
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
-        ensureProfile(newSession.user).catch(() => {});
+        // Use setTimeout to prevent potential deadlocks
+        setTimeout(() => {
+          ensureProfile(newSession.user!).catch(() => {});
+        }, 0);
       }
     });
 
@@ -52,19 +55,13 @@ export const useAuth = (): UseAuthResult => {
 
   const signInWithGoogle = useMemo(() => {
     return async () => {
-      try {
-        // Clear any existing session to force Google account chooser reliably
-        await supabase.auth.signOut();
-      } catch {}
-      try {
-        localStorage.removeItem('sb-auth-token');
-      } catch {}
       await supabase.auth.signInWithOAuth({ 
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             prompt: 'select_account',
+            access_type: 'offline'
           },
         }
       });
