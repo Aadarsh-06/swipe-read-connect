@@ -50,7 +50,7 @@ export const useBooks = () => {
         summary: c.summary,
         authorBio: c.authorBio,
       }));
-      setBooks(initial.slice(0, 15));
+      setBooks(initial.slice(0, 10));
       setLoading(false);
 
       // In the background, sync curated books so we can persist likes reliably
@@ -63,7 +63,9 @@ export const useBooks = () => {
         setIsbnToSupabaseId(map);
         // Update the books array with proper Supabase ids where available
         setBooks((prev) =>
-          prev.map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
+          prev
+            .map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
+            .slice(0, 10)
         );
       }
     } catch (err) {
