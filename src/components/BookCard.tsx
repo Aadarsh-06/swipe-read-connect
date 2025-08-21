@@ -163,7 +163,7 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
               </div>
             )}
             <button
-              onClick={(e) => { e.stopPropagation(); setDetailsOpen((s) => !s); }}
+              onClick={(e) => { e.stopPropagation(); setDetailsOpen(true); }}
               className="absolute bottom-3 right-3 bg-background/80 backdrop-blur px-3 py-1 rounded-full text-xs border flex items-center gap-1 hover:bg-background"
             >
               <Info className="h-3 w-3" /> Details
@@ -209,11 +209,29 @@ export const BookCard = ({ book, onSwipe, isAnimating, swipeDirection }: BookCar
           </div>
         </div>
 
-        {/* Sliding details panel (card-level) */}
+        {/* Details overlay and sliding panel */}
+        {detailsOpen && (
+          <div
+            className="absolute inset-0 z-20"
+            onMouseDown={(e) => { e.stopPropagation(); setDetailsOpen(false); }}
+          >
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+        )}
         <div
-          className={`absolute left-0 right-0 bottom-0 z-20 bg-background/95 backdrop-blur border-t p-4 rounded-t-xl shadow-lg transition-transform duration-300 ease-out ${detailsOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          className={`absolute left-0 right-0 bottom-0 z-30 bg-background/95 backdrop-blur border-t p-4 rounded-t-xl shadow-lg transition-transform duration-300 ease-out ${detailsOpen ? 'translate-y-0' : 'translate-y-full'}`}
           onMouseDown={(e) => e.stopPropagation()}
         >
+          <div className="flex justify-between items-center mb-2">
+            <div className="font-semibold">Details</div>
+            <button
+              aria-label="Close details"
+              className="rounded-md px-2 py-1 text-xs border hover:bg-muted"
+              onClick={() => setDetailsOpen(false)}
+            >
+              Close
+            </button>
+          </div>
           {book.summary && (
             <div className="mb-2">
               <div className="font-semibold mb-1">Summary</div>
