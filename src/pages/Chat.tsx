@@ -180,39 +180,80 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen container mx-auto px-4 py-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Link to="/community" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Community
-        </Link>
-      </div>
-      <Card className="h-[70vh] flex flex-col">
-        <CardHeader>
-          <CardTitle>Chat</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto space-y-2">
-            {messages.map((m) => (
-              <div key={m.id} className={`max-w-[85%] px-3 py-2 rounded-2xl break-words ${m.sender_id === user.id ? 'bg-primary text-primary-foreground ml-auto rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                <div className="whitespace-pre-wrap break-words break-all overflow-hidden">{m.content}</div>
-                <div className="flex items-center gap-2 text-[10px] opacity-80 mt-1 whitespace-nowrap">
-                  <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  {m.sender_id === user.id && (
-                    <span className="inline-flex items-center gap-1">
-                      <Check className="h-3 w-3" /> {m.pending ? 'Sending…' : 'Sent'}
-                    </span>
-                  )}
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="flex items-center gap-3 mb-4">
+          <Link to="/community" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Back to Community
+          </Link>
+        </div>
+        
+        <Card className="h-[calc(100vh-140px)] min-h-[500px] flex flex-col shadow-lg">
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="text-lg">Chat</CardTitle>
+          </CardHeader>
+          
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth">
+              {messages.map((m) => (
+                <div key={m.id} className={`flex ${m.sender_id === user.id ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[75%] sm:max-w-[65%] px-3 py-2 rounded-2xl ${
+                    m.sender_id === user.id 
+                      ? 'bg-primary text-primary-foreground rounded-tr-sm' 
+                      : 'bg-muted text-muted-foreground rounded-tl-sm'
+                  }`}>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap break-words hyphens-auto">
+                      {m.content}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs opacity-70 mt-1">
+                      <span className="shrink-0">
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {m.sender_id === user.id && (
+                        <span className="inline-flex items-center gap-1 shrink-0">
+                          <Check className="h-3 w-3" /> 
+                          {m.pending ? 'Sending…' : 'Sent'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              ))}
+              <div ref={bottomRef} className="h-1" />
+            </div>
+            
+            {/* Input Area */}
+            <div className="border-t bg-background p-4">
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Input 
+                    value={text} 
+                    onChange={(e) => setText(e.target.value)} 
+                    placeholder="Type a message..." 
+                    onKeyDown={(e) => { 
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }} 
+                    className="min-h-[44px] resize-none"
+                    maxLength={1000}
+                  />
+                </div>
+                <Button 
+                  onClick={send} 
+                  disabled={!text.trim()} 
+                  className="min-h-[44px] px-6"
+                  size="default"
+                >
+                  Send
+                </Button>
               </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
-          <div className="mt-3 flex gap-2">
-            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" onKeyDown={(e) => { if (e.key === 'Enter') send(); }} className="min-h-[44px]" />
-            <Button onClick={send} className="min-h-[44px]">Send</Button>
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
