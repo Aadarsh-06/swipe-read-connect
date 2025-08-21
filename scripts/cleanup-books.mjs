@@ -29,30 +29,10 @@ const curatedIsbns = [
 async function main() {
   const BATCH = parseInt(process.env.BATCH_SIZE || '1000', 10);
   let totalDeleted = 0;
-  let batchNum = 0;
+  let lastId = 0;
 
-  while (true) {
-    batchNum += 1;
-    console.log(`Fetching batch #${batchNum} (limit ${BATCH})...`);
-    const { data: batch, error: fetchErr } = await supabase
-      .from('BOOKS')
-      .select('id, ISBN')
-      .order('id', { ascending: true })
-      .limit(BATCH);
-    if (fetchErr) {
-      console.error('Error fetching batch:', fetchErr.message);
-      process.exitCode = 1;
-      return;
-    }
-    const idsArray = (batch || [])
-      .filter((r) => !(r.ISBN && curatedIsbns.includes(r.ISBN)))
-      .map((r) => r.id);
-    if (!idsArray.length) {
-      console.log('No more non-curated books to delete.');
-      break;
-    }
-
-    console.log(`Batch #${batchNum}: deleting ${idsArray.length} books and dependents...`);
+  async function deleteIds(idsArray) {
+    if (!idsArray.length) return 0;
     const { error: prefErr } = await supabase
       .from('user_book_preferences')
       .delete()
@@ -71,11 +51,34 @@ async function main() {
       .in('id', idsArray);
     if (booksErr) {
       console.error('BOOKS delete error:', booksErr.message);
+      throw booksErr;
+    }
+    return idsArray.length;
+  }
+
+  while (true) {
+    const { data: batch, error: fetchErr } = await supabase
+      .from('BOOKS')
+      .select('id, ISBN')
+      .gt('id', lastId)
+      .order('id', { ascending: true })
+      .limit(BATCH);
+    if (fetchErr) {
+      console.error('Error scanning batch:', fetchErr.message);
       process.exitCode = 1;
       return;
     }
-    totalDeleted += idsArray.length;
-    console.log(`Deleted so far: ${totalDeleted}`);
+    if (!batch || batch.length === 0) break;
+
+    lastId = batch[batch.length - 1].id;
+    const toDelete = batch
+      .filter((r) => !(r.ISBN && curatedIsbns.includes(r.ISBN)))
+      .map((r) => r.id);
+    if (toDelete.length) {
+      console.log(`Deleting ${toDelete.length} rows in id range (${batch[0].id}..${batch[batch.length - 1].id})`);
+      totalDeleted += await deleteIds(toDelete);
+      console.log(`Deleted so far: ${totalDeleted}`);
+    }
   }
 
   console.log(`Cleanup complete. Total books deleted: ${totalDeleted}`);
