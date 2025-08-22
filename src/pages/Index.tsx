@@ -87,11 +87,13 @@ const Index = () => {
                   Start Swiping
                 </Button>
               </Link>
-              <Link to="/signin" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg sm:text-xl px-8 sm:px-12 py-6 sm:py-8 rounded-full border-2 border-primary/30 hover:border-primary hover:scale-105 transition-all duration-300">
-                  Sign In
-                </Button>
-              </Link>
+              {!user && (
+                <Link to="/signin" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg sm:text-xl px-8 sm:px-12 py-6 sm:py-8 rounded-full border-2 border-primary/30 hover:border-primary hover:scale-105 transition-all duration-300">
+                    Sign In
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
