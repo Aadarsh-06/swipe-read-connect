@@ -7,20 +7,41 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const Swipe = () => {
   const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount } = useBooks();
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedCount, setMatchedCount] = useState(0);
+  const [matchedUserNames, setMatchedUserNames] = useState<string[]>([]);
+  const [isSuperSwipe, setIsSuperSwipe] = useState(false);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (lastMatchUserIds && lastMatchUserIds.length > 0) {
       setMatchedCount(prev => prev + lastMatchUserIds.length);
+      fetchMatchedUserNames(lastMatchUserIds);
       setShowMatchDialog(true);
     }
   }, [lastMatchUserIds]);
+
+  const fetchMatchedUserNames = async (userIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .in('user_id', userIds);
+      
+      if (error) throw error;
+      
+      const names = data?.map(profile => profile.display_name || 'Anonymous Reader') || [];
+      setMatchedUserNames(names);
+    } catch (error) {
+      console.error('Error fetching matched user names:', error);
+      setMatchedUserNames(['Anonymous Reader']);
+    }
+  };
 
   const matchPercent = useMemo(() => {
     if (totalBooks === 0) return 0;
@@ -130,14 +151,35 @@ const Swipe = () => {
       <Dialog open={showMatchDialog} onOpenChange={setShowMatchDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>It’s a match! 🎉</DialogTitle>
-            <DialogDescription>
-              You and another reader liked the same book. Start a conversation!
+            <DialogTitle className="text-2xl">
+              {isSuperSwipe ? '⭐ Super Match! ⭐' : 'It\'s a match! 🎉'}
+            </DialogTitle>
+            <DialogDescription className="text-lg">
+              {matchedUserNames.length > 0 ? (
+                <div className="space-y-2">
+                  <p>You matched with:</p>
+                  <div className="font-semibold text-primary">
+                    {matchedUserNames.map((name, index) => (
+                      <div key={index} className="py-1">
+                        {isSuperSwipe ? '⭐ ' : '📚 '}{name}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm opacity-80 mt-3">
+                    {isSuperSwipe 
+                      ? 'Your Super Swipe caught their attention! Start a conversation!' 
+                      : 'You both loved the same book. Start a conversation!'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <p>You and another reader liked the same book. Start a conversation!</p>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button variant="secondary" onClick={() => setShowMatchDialog(false)}>Keep Swiping</Button>
-            <Button onClick={() => { setShowMatchDialog(false); navigate('/community'); }}>See Matches</Button>
+            <Button variant="secondary" onClick={() => { setShowMatchDialog(false); setIsSuperSwipe(false); }}>Keep Swiping</Button>
+            <Button onClick={() => { setShowMatchDialog(false); setIsSuperSwipe(false); navigate('/community'); }}>See Matches</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -202,11 +244,15 @@ const Swipe = () => {
                   <X className="h-8 w-8" />
                 </button>
                 <button
-                  onClick={() => swipeBook('right')}
+                  onClick={() => {
+                    setIsSuperSwipe(true);
+                    swipeBook('right');
+                  }}
                   disabled={isAnimating}
-                  className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
+                  className="w-16 h-16 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center animate-pulse hover:animate-bounce relative overflow-hidden group"
                 >
-                  <Star className="h-8 w-8" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-400 opacity-0 group-hover:opacity-30 animate-pulse"></div>
+                  <Star className="h-8 w-8 relative z-10 animate-spin hover:animate-none transition-transform duration-300" />
                 </button>
                 <button
                   onClick={() => swipeBook('right')}

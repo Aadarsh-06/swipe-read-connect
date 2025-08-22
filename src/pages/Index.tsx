@@ -150,15 +150,10 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-background/90 backdrop-blur-sm border-t py-8 sm:py-12 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex justify-center items-center">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="text-lg sm:text-xl font-bold">Bookble</span>
-            </div>
-            <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6 text-sm sm:text-base text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Contact</a>
             </div>
           </div>
           <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t text-center text-sm sm:text-base text-muted-foreground">
