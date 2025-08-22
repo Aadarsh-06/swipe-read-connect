@@ -198,7 +198,7 @@ const Swipe = () => {
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             <BookOpen className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              BookSwipe
+              Bookble
             </span>
           </Link>
           <div className="flex items-center space-x-4">
