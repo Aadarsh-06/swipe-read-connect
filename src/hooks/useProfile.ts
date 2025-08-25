@@ -6,6 +6,7 @@ export interface ProfileRow {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
+  instagram_id: string | null;
 }
 
 export const useProfile = () => {
@@ -22,7 +23,7 @@ export const useProfile = () => {
         setError(null);
         const { data, error } = await supabase
           .from("profiles")
-          .select("user_id, display_name, avatar_url")
+          .select("user_id, display_name, avatar_url, instagram_id")
           .eq("user_id", user.id)
           .maybeSingle();
         if (error) throw error;
@@ -36,7 +37,7 @@ export const useProfile = () => {
     load();
   }, [user?.id]);
 
-  const updateProfile = async (updates: Partial<Pick<ProfileRow, 'display_name' | 'avatar_url'>>) => {
+  const updateProfile = async (updates: Partial<Pick<ProfileRow, 'display_name' | 'avatar_url' | 'instagram_id'>>) => {
     if (!user) return;
     const { error } = await supabase
       .from("profiles")

@@ -13,12 +13,17 @@ const Profile = () => {
   const { signOut } = useAuth();
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [avatar, setAvatar] = useState(profile?.avatar_url || "");
+  const [instagramId, setInstagramId] = useState(profile?.instagram_id || "");
   const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
     try {
       setSaving(true);
-      await updateProfile({ display_name: displayName || null, avatar_url: avatar || null });
+      await updateProfile({ 
+        display_name: displayName || null, 
+        avatar_url: avatar || null,
+        instagram_id: instagramId || null
+      });
     } finally {
       setSaving(false);
     }
@@ -59,6 +64,10 @@ const Profile = () => {
               <div>
                 <Label>Avatar URL</Label>
                 <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://…" />
+              </div>
+              <div>
+                <Label>Instagram ID</Label>
+                <Input value={instagramId} onChange={(e) => setInstagramId(e.target.value)} placeholder="@your_instagram" />
               </div>
             </div>
           </div>

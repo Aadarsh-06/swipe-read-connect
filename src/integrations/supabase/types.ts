@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      book_chats: {
+        Row: {
+          book_id: number
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          book_id: number
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: number
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       BOOKS: {
         Row: {
           "Book-Author": string | null
@@ -116,6 +140,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          instagram_id: string | null
           updated_at: string
           user_id: string
         }
@@ -125,6 +150,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          instagram_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -134,6 +160,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          instagram_id?: string | null
           updated_at?: string
           user_id?: string
         }

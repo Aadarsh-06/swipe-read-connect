@@ -11,6 +11,7 @@ const SignIn = lazy(() => import("./pages/SignIn"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Community = lazy(() => import("./pages/Community"));
 const Chat = lazy(() => import("./pages/Chat"));
+const BookChat = lazy(() => import("./pages/BookChat"));
 const TopMatch = lazy(() => import("./pages/TopMatch"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/top-match" element={<TopMatch />} />
             <Route path="/chat/:recipientId" element={<Chat />} />
+            <Route path="/book-chat/:bookId" element={<BookChat />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

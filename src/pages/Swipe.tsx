@@ -243,17 +243,17 @@ const Swipe = () => {
                 >
                   <X className="h-8 w-8" />
                 </button>
-                <button
-                  onClick={() => {
-                    setIsSuperSwipe(true);
-                    swipeBook('right');
-                  }}
-                  disabled={isAnimating}
-                  className="w-16 h-16 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center animate-pulse hover:animate-bounce relative overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-400 opacity-0 group-hover:opacity-30 animate-pulse"></div>
-                  <Star className="h-8 w-8 relative z-10 animate-spin hover:animate-none transition-transform duration-300" />
-                </button>
+                  <button
+                    onClick={() => {
+                      setIsSuperSwipe(true);
+                      swipeBook('right');
+                    }}
+                    disabled={isAnimating}
+                    className="w-16 h-16 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center animate-pulse hover:animate-bounce relative overflow-hidden group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-400 opacity-0 group-hover:opacity-30 animate-pulse"></div>
+                    <Star className="h-8 w-8 relative z-10 transition-transform duration-300" />
+                  </button>
                 <button
                   onClick={() => swipeBook('right')}
                   disabled={isAnimating}
