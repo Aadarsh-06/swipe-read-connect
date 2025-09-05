@@ -50,7 +50,7 @@ export const useBooks = () => {
         summary: c.summary,
         authorBio: c.authorBio,
       }));
-      setBooks(initial.slice(0, 10));
+      setBooks(initial.slice(0, 30));
       setLoading(false);
 
       // In the background, sync curated books so we can persist likes reliably
@@ -65,7 +65,7 @@ export const useBooks = () => {
         setBooks((prev) =>
           prev
             .map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
-            .slice(0, 10)
+            .slice(0, 30)
         );
       }
     } catch (err) {
