@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { ArrowLeft, Check } from "lucide-react";
 
 interface MessageRow {
@@ -91,12 +92,15 @@ const Chat = () => {
         }
       })
       .subscribe((status) => {
+        console.log(`Chat subscription status: ${status}`);
         // Fallback polling if subscription fails or disconnects
         if (status !== "SUBSCRIBED") {
+          console.warn('Chat real-time disconnected, falling back to polling');
           if (!pollRef.current) {
             pollRef.current = setInterval(loadMessages, 2000);
           }
         } else {
+          console.log('Chat real-time connected successfully');
           if (pollRef.current) {
             clearInterval(pollRef.current);
             pollRef.current = null;
@@ -190,7 +194,10 @@ const Chat = () => {
         
         <Card className="h-[calc(100vh-140px)] min-h-[500px] flex flex-col shadow-lg">
           <CardHeader className="pb-3 border-b">
-            <CardTitle className="text-lg">Chat</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Chat</CardTitle>
+              <RealtimeStatus channelName={`chat-${user.id}-${recipientId}`} />
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">

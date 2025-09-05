@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { ArrowLeft, Check, BookOpen } from "lucide-react";
 
 interface BookChatMessage {
@@ -103,17 +104,47 @@ const BookChat = () => {
         schema: "public", 
         table: "book_chats",
         filter: `book_id=eq.${bookId}`
-      }, (payload) => {
+      }, async (payload) => {
         const row = payload.new as BookChatMessage;
+        
+        // Skip if this message already exists (avoid duplicates)
         setMessages((prev) => {
           if (prev.some(m => m.id === row.id)) return prev;
-          // We need to fetch the profile info for the new message
-          return [...prev, row].sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+          
+          // Add the message and fetch profile data if needed
+          const newMessage: Message = {
+            ...row,
+            profiles: { display_name: null, avatar_url: null }
+          };
+          
+          return [...prev, newMessage].sort((a: any, b: any) => 
+            (a.created_at || '').localeCompare(b.created_at || '')
+          );
         });
-        // Reload to get profile info
-        loadMessages();
+        
+        // Fetch profile info for the new message asynchronously
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("display_name, avatar_url")
+            .eq("user_id", row.user_id)
+            .single();
+          
+          // Update the message with profile info
+          setMessages((prev) => 
+            prev.map(m => 
+              m.id === row.id 
+                ? { ...m, profiles: profile || { display_name: null, avatar_url: null } }
+                : m
+            )
+          );
+        } catch (error) {
+          console.warn('Failed to fetch profile for new message:', error);
+        }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`BookChat subscription status: ${status}`);
+      });
 
     channelRef.current = channel;
 
@@ -206,28 +237,31 @@ const BookChat = () => {
         
         <Card className="h-[calc(100vh-140px)] min-h-[500px] flex flex-col shadow-lg">
           <CardHeader className="pb-3 border-b">
-            {bookInfo ? (
-              <div className="flex items-center gap-3">
-                {bookInfo["Image-URL-L"] && (
-                  <img 
-                    src={bookInfo["Image-URL-L"]} 
-                    alt={bookInfo["Book-Title"] || "Book cover"}
-                    className="w-12 h-16 object-cover rounded"
-                  />
-                )}
-                <div>
-                  <CardTitle className="text-lg">{bookInfo["Book-Title"] || "Book Chat"}</CardTitle>
-                  {bookInfo["Book-Author"] && (
-                    <p className="text-sm text-muted-foreground">by {bookInfo["Book-Author"]}</p>
+            <div className="flex items-center justify-between">
+              {bookInfo ? (
+                <div className="flex items-center gap-3">
+                  {bookInfo["Image-URL-L"] && (
+                    <img 
+                      src={bookInfo["Image-URL-L"]} 
+                      alt={bookInfo["Book-Title"] || "Book cover"}
+                      className="w-12 h-16 object-cover rounded"
+                    />
                   )}
+                  <div>
+                    <CardTitle className="text-lg">{bookInfo["Book-Title"] || "Book Chat"}</CardTitle>
+                    {bookInfo["Book-Author"] && (
+                      <p className="text-sm text-muted-foreground">by {bookInfo["Book-Author"]}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                <CardTitle className="text-lg">Book Chat</CardTitle>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  <CardTitle className="text-lg">Book Chat</CardTitle>
+                </div>
+              )}
+              <RealtimeStatus channelName={`book-chat-${bookId}`} />
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
