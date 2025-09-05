@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useImagePreloader } from './useImagePreloader';
 import { curatedBooks, syncCuratedBooks, CuratedBook } from '@/data/books';
 
 interface Book {
@@ -29,6 +30,9 @@ export const useBooks = () => {
   const [likesCount, setLikesCount] = useState<number>(0);
   // Map ISBN -> Supabase BOOKS.id to avoid extra lookups once resolved
   const [isbnToSupabaseId, setIsbnToSupabaseId] = useState<Record<string, number>>({});
+  
+  // Image preloading for smooth swiping
+  const imagePreloader = useImagePreloader(books, currentBookIndex, 4);
 
   useEffect(() => {
     fetchBooks();
@@ -187,5 +191,9 @@ export const useBooks = () => {
     swipeDirection,
     lastMatchUserIds,
     likesCount,
+    // Image preloading functions
+    getOptimalImageUrl: imagePreloader.getOptimalImageUrl,
+    isImageLoaded: imagePreloader.isImageLoaded,
+    getImageLoadingState: imagePreloader.getImageLoadingState,
   };
 };

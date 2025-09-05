@@ -1,4 +1,4 @@
-import { BookCard } from "@/components/BookCard";
+import { OptimizedBookCard } from "@/components/OptimizedBookCard";
 import { useBooks } from "@/hooks/useBooks";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ArrowLeft, Heart, Star, X, RotateCcw, Users, MessageCircle } from "lucide-react";
@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 
 const Swipe = () => {
-  const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount } = useBooks();
+  const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount, getOptimalImageUrl, isImageLoaded, getImageLoadingState } = useBooks();
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedCount, setMatchedCount] = useState(0);
   const [matchedUserNames, setMatchedUserNames] = useState<string[]>([]);
@@ -226,11 +226,14 @@ const Swipe = () => {
               
               {/* Book Card */}
               <div className="relative h-[600px] mb-8">
-                <BookCard 
+                <OptimizedBookCard 
                   book={currentBook} 
                   onSwipe={swipeBook}
                   isAnimating={isAnimating}
                   swipeDirection={swipeDirection}
+                  getOptimalImageUrl={getOptimalImageUrl}
+                  isImageLoaded={isImageLoaded}
+                  getImageLoadingState={getImageLoadingState}
                 />
               </div>
               
