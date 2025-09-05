@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { generateBookPlaceholder, getBookGenreFromTitle, bookGenrePlaceholders } from '@/utils/bookPlaceholders';
 
 interface Book {
   id: number;
@@ -37,6 +38,15 @@ export const useImagePreloader = (books: Book[], currentIndex: number, preloadCo
       urls.push(`https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-M.jpg`);
       urls.push(`https://covers.openlibrary.org/b/isbn/${book["ISBN"]}-S.jpg`);
     }
+    
+    // Beautiful placeholder fallbacks (always work)
+    const genre = getBookGenreFromTitle(book["Book-Title"], book["Book-Author"]);
+    if (genre && bookGenrePlaceholders[genre]) {
+      urls.push(bookGenrePlaceholders[genre]);
+    }
+    
+    // Custom generated placeholder (final fallback)
+    urls.push(generateBookPlaceholder(book["Book-Title"], book["Book-Author"], book["ISBN"]));
     
     return urls.filter(Boolean);
   }, []);
