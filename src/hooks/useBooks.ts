@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useImagePreloader } from './useImagePreloader';
-import { curatedBooks, syncCuratedBooks, CuratedBook } from '@/data/books';
+import { lacBookCollection, syncLacBooks, CuratedBook, getRandomizedBooks } from '@/data/lacBooks';
 
 interface Book {
   id: number;
@@ -40,8 +40,11 @@ export const useBooks = () => {
 
   const fetchBooks = async () => {
     try {
-      // Immediately render from local curated list for fast first paint
-      const initial: Book[] = curatedBooks.map((c: CuratedBook, index: number) => ({
+      // Get randomized books from LAC collection (25 random books each session)
+      const randomizedBooks = getRandomizedBooks(25);
+      
+      // Immediately render from randomized LAC collection for fast first paint
+      const initial: Book[] = randomizedBooks.map((c: CuratedBook, index: number) => ({
         id: (c.id as number) ?? -1 * (index + 1),
         "Book-Title": c.title,
         "Book-Author": c.author,
@@ -54,22 +57,20 @@ export const useBooks = () => {
         summary: c.summary,
         authorBio: c.authorBio,
       }));
-      setBooks(initial.slice(0, 30));
+      setBooks(initial);
       setLoading(false);
 
-      // In the background, sync curated books so we can persist likes reliably
-      const curated = await syncCuratedBooks();
+      // In the background, sync LAC books so we can persist likes reliably
+      const synced = await syncLacBooks();
       const map: Record<string, number> = {};
-      curated.forEach((c) => {
+      synced.forEach((c) => {
         if (c.id && c.isbn) map[c.isbn] = c.id;
       });
       if (Object.keys(map).length > 0) {
         setIsbnToSupabaseId(map);
         // Update the books array with proper Supabase ids where available
         setBooks((prev) =>
-          prev
-            .map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
-            .slice(0, 30)
+          prev.map((b) => (map[b["ISBN"]] ? { ...b, id: map[b["ISBN"]] } : b))
         );
       }
     } catch (err) {
