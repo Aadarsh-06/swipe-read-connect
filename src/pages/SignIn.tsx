@@ -6,7 +6,7 @@ import { BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import booksBackground from "@/assets/books-background.jpg";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, handleAuthError } from "@/lib/supabase-config";
 import { useAuth } from "@/hooks/useAuth";
 
 const SignIn = () => {
@@ -25,7 +25,7 @@ const SignIn = () => {
       if (error) throw error;
       if (data?.session) navigate("/");
     } catch (e: any) {
-      setError(e?.message || "Sign in failed");
+      setError(handleAuthError(e));
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, getAuthRedirectUrl } from "@/lib/supabase-config";
 import type { Session, User } from "@supabase/supabase-js";
 
 interface UseAuthResult {
@@ -78,7 +78,7 @@ export const useAuth = (): UseAuthResult => {
       await supabase.auth.signInWithOAuth({ 
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthRedirectUrl(),
           queryParams: {
             prompt: 'select_account',
             access_type: 'offline'

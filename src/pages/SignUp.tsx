@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, handleAuthError, getAuthRedirectUrl } from "@/lib/supabase-config";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,16 +29,21 @@ const SignUp = () => {
       const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+        options: { 
+          emailRedirectTo: getAuthRedirectUrl(),
+          data: {
+            signup_source: 'bookble_web'
+          }
+        }
       });
       if (error) throw error;
       if (data.session) {
         navigate("/");
       } else {
-        setInfo("Check your email to confirm your account, then sign in.");
+        setInfo("Success! Check your email for a confirmation link. Click the link in your email to activate your account, then you can sign in.");
       }
     } catch (e: any) {
-      setError(e?.message || "Sign up failed");
+      setError(handleAuthError(e));
     } finally {
       setLoading(false);
     }
@@ -74,7 +79,11 @@ const SignUp = () => {
               <Input id="confirm" type="password" placeholder="Confirm your password" className="bg-input/80" value={confirm} onChange={(e) => setConfirm(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') onSubmit(); }} />
             </div>
             {error && <div className="text-destructive text-sm">{error}</div>}
-            {info && <div className="text-sm text-muted-foreground">{info}</div>}
+            {info && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="text-sm text-green-800">{info}</div>
+              </div>
+            )}
             <Button className="w-full" size="lg" disabled={loading} onClick={onSubmit}>{loading ? "Creating..." : "Sign Up"}</Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
