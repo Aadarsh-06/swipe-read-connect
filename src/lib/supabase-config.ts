@@ -11,7 +11,7 @@ export const createSupabaseClient = () => {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      flowType: 'pkce', // More secure flow
+      flowType: 'implicit', // Changed from 'pkce' to 'implicit' for email confirmation
       debug: import.meta.env.DEV, // Enable debug logs in development
     },
   });
@@ -46,8 +46,11 @@ export const handleAuthError = (error: any): string => {
     if (error.message.includes('otp_expired')) {
       return 'Your confirmation link has expired. Please try signing in to request a new confirmation email, or sign up again.';
     }
-    if (error.message.includes('access_denied')) {
-      return 'The confirmation link is no longer valid. Please try signing in to request a new confirmation email.';
+    if (error.message.includes('both auth code and code verifier should be non-empty')) {
+      return 'Authentication configuration error. Please try signing in manually or contact support.';
+    }
+    if (error.message.includes('Unexpected authentication method')) {
+      return 'There was an issue with the authentication method. Please try signing in manually.';
     }
     if (error.message.includes('User not found')) {
       return 'No account found with this email address.';

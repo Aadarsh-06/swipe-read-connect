@@ -49,6 +49,7 @@ const AuthCallback = () => {
         if (hasTokenHash) {
           console.log('Found token_hash, processing email confirmation...');
           
+          // For implicit flow, we need to handle the session differently
           // Try to get session immediately
           const { data, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) {
@@ -63,23 +64,8 @@ const AuthCallback = () => {
             return;
           }
           
-          // If no session yet, try to refresh the session
-          console.log('No immediate session, trying to refresh...');
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.error('Refresh error:', refreshError);
-            throw refreshError;
-          }
-          
-          if (refreshData.session) {
-            console.log('Email confirmation successful after refresh!');
-            setStatus('success');
-            startCountdown();
-            return;
-          }
-          
-          // If still no session, wait a moment and try again
-          console.log('Still no session, waiting and retrying...');
+          // If no session yet, wait a moment and try again
+          console.log('No immediate session, waiting and retrying...');
           await new Promise(resolve => setTimeout(resolve, 2000));
           
           const { data: retryData, error: retryError } = await supabase.auth.getSession();
@@ -98,20 +84,10 @@ const AuthCallback = () => {
           return;
         }
 
-        // Handle OAuth code exchange (OAuth providers like Google)
+        // Handle OAuth code exchange (OAuth providers like Google) - should not happen with email confirmation
         if (hasAuthCode) {
-          console.log('Found auth code, exchanging for session...');
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
-          if (exchangeError) {
-            console.error('Code exchange error:', exchangeError);
-            throw exchangeError;
-          }
-          if (data.session) {
-            console.log('OAuth login successful!');
-            setStatus('success');
-            startCountdown();
-            return;
-          }
+          console.log('Found auth code, but this should not happen with email confirmation...');
+          throw new Error('Unexpected authentication method. Please try signing in manually.');
         }
 
         // Handle hash-based tokens (some OAuth flows)
