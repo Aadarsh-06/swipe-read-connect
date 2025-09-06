@@ -56,20 +56,31 @@ const Chat = () => {
   useEffect(() => {
     if (!user || !recipientId) return;
 
+    console.log('🔧 Chat useEffect triggered:', { userId: user.id, recipientId });
+
     // Initial load
     loadMessages();
 
     // Clear previous channel if any
     if (channelRef.current) {
+      console.log('🧹 Clearing previous channel');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     // Subscribe to realtime inserts in both directions with filters
-    const channel = supabase.channel(`chat-${user.id}-${recipientId}`);
+    const channelName = `chat-${user.id}-${recipientId}`;
+    console.log('📡 Creating channel:', channelName);
+    const channel = supabase.channel(channelName);
 
     channel
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${user.id}` }, (payload) => {
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "messages", 
+        filter: `sender_id=eq.${user.id}` 
+      }, (payload) => {
+        console.log('📨 Received message from current user:', payload);
         const row = payload.new as MessageRow;
         if (conversationFilter(row)) {
           setMessages((prev) => {
@@ -85,22 +96,28 @@ const Chat = () => {
           });
         }
       })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${recipientId}` }, (payload) => {
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "messages", 
+        filter: `sender_id=eq.${recipientId}` 
+      }, (payload) => {
+        console.log('📨 Received message from recipient:', payload);
         const row = payload.new as MessageRow;
         if (conversationFilter(row)) {
           setMessages((prev) => (prev.some(m => m.id === row.id) ? prev : [...prev, row]).sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || '')));
         }
       })
       .subscribe((status) => {
-        console.log(`Chat subscription status: ${status}`);
+        console.log(`📡 Chat subscription status: ${status}`);
         // Fallback polling if subscription fails or disconnects
         if (status !== "SUBSCRIBED") {
-          console.warn('Chat real-time disconnected, falling back to polling');
+          console.warn('⚠️ Chat real-time disconnected, falling back to polling');
           if (!pollRef.current) {
             pollRef.current = setInterval(loadMessages, 2000);
           }
         } else {
-          console.log('Chat real-time connected successfully');
+          console.log('✅ Chat real-time connected successfully');
           if (pollRef.current) {
             clearInterval(pollRef.current);
             pollRef.current = null;
@@ -112,10 +129,12 @@ const Chat = () => {
 
     // Fallback polling safety net
     if (!pollRef.current) {
+      console.log('🔄 Starting fallback polling');
       pollRef.current = setInterval(loadMessages, 4000);
     }
 
     return () => {
+      console.log('🧹 Cleaning up chat channel');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
@@ -137,6 +156,8 @@ const Chat = () => {
     const tempId = `temp-${Date.now()}`;
     const now = new Date().toISOString();
 
+    console.log('📤 Sending message:', { content, recipientId, userId: user.id });
+
     // Optimistic append
     setMessages((prev) => [...prev, { id: tempId, sender_id: user.id, recipient_id: recipientId, content, created_at: now, pending: true }]);
     setText("");
@@ -150,6 +171,7 @@ const Chat = () => {
       .single();
 
     if (!error && data) {
+      console.log('✅ Message sent successfully:', data);
       // Reconcile pending temp with actual row
       setMessages((prev) => {
         const idx = prev.findIndex((m) => m.id === tempId);
@@ -163,6 +185,7 @@ const Chat = () => {
         return [...prev, data].sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
       });
     } else {
+      console.error('❌ Failed to send message:', error);
       // Mark as failed (or remove)
       setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, pending: false } : m)));
     }
