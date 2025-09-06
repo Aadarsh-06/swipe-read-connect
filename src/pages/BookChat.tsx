@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase-config";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -144,6 +144,11 @@ const BookChat = () => {
       })
       .subscribe((status) => {
         console.log(`BookChat subscription status: ${status}`);
+        if (status === 'SUBSCRIBED') {
+          console.log('BookChat real-time connected successfully');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('BookChat real-time connection failed:', status);
+        }
       });
 
     channelRef.current = channel;
