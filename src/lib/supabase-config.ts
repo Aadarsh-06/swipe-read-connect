@@ -14,6 +14,11 @@ export const createSupabaseClient = () => {
       flowType: 'implicit', // Changed from 'pkce' to 'implicit' for email confirmation
       debug: import.meta.env.DEV, // Enable debug logs in development
     },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
   });
 };
 

@@ -58,6 +58,25 @@ const Chat = () => {
 
     console.log('🔧 Chat useEffect triggered:', { userId: user.id, recipientId });
 
+    // Test real-time connection first
+    const testChannel = supabase.channel('test-connection');
+    testChannel
+      .on('broadcast', { event: 'test' }, (payload) => {
+        console.log('✅ Real-time test successful:', payload);
+      })
+      .subscribe((status) => {
+        console.log('🧪 Test channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time connection is working!');
+          // Send a test message
+          testChannel.send({
+            type: 'broadcast',
+            event: 'test',
+            payload: { message: 'Real-time test' }
+          });
+        }
+      });
+
     // Initial load
     loadMessages();
 
@@ -143,6 +162,8 @@ const Chat = () => {
         clearInterval(pollRef.current);
         pollRef.current = null;
       }
+      // Clean up test channel
+      supabase.removeChannel(testChannel);
     };
   }, [user, recipientId]);
 
