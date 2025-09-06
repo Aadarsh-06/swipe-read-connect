@@ -18,11 +18,15 @@ const AuthCallback = () => {
   useEffect(() => {
     const processAuth = async () => {
       try {
+        console.log('Processing auth callback...');
+        console.log('Current URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+        console.log('Search:', window.location.search);
+        
         // Handle different types of auth callbacks
-        const hash = window.location.hash;
         const searchParams = new URLSearchParams(window.location.search);
         const hasAuthCode = searchParams.get('code');
-        const hasAccessToken = hash.includes('access_token');
+        const hasTokenHash = searchParams.get('token_hash');
         const hasError = searchParams.get('error');
         
         // Check for authentication errors first
@@ -31,13 +35,44 @@ const AuthCallback = () => {
           throw new Error(errorDescription);
         }
 
-        // Handle OAuth code exchange (email confirmation, OAuth providers)
+        // Handle email confirmation with token_hash (most common for email signup)
+        if (hasTokenHash) {
+          console.log('Found token_hash, processing email confirmation...');
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            throw sessionError;
+          }
+          if (data.session) {
+            console.log('Email confirmation successful!');
+            setStatus('success');
+            startCountdown();
+            return;
+          }
+          // If no session yet, wait a moment and try again
+          setTimeout(async () => {
+            const { data: retryData } = await supabase.auth.getSession();
+            if (retryData.session) {
+              console.log('Email confirmation successful after retry!');
+              setStatus('success');
+              startCountdown();
+            } else {
+              throw new Error('Email confirmation completed but no session found');
+            }
+          }, 1000);
+          return;
+        }
+
+        // Handle OAuth code exchange (OAuth providers like Google)
         if (hasAuthCode) {
+          console.log('Found auth code, exchanging for session...');
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
           if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
             throw exchangeError;
           }
           if (data.session) {
+            console.log('OAuth login successful!');
             setStatus('success');
             startCountdown();
             return;
@@ -45,20 +80,33 @@ const AuthCallback = () => {
         }
 
         // Handle hash-based tokens (some OAuth flows)
-        if (hasAccessToken) {
+        const hash = window.location.hash;
+        if (hash.includes('access_token')) {
+          console.log('Found access token in hash...');
           const { data, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) {
             throw sessionError;
           }
           if (data.session) {
+            console.log('Hash-based auth successful!');
             setStatus('success');
             startCountdown();
             return;
           }
         }
 
-        // If we get here without a session, something went wrong
-        throw new Error('No valid authentication session found');
+        // If we get here without a session, check one more time
+        console.log('No immediate auth tokens found, checking for existing session...');
+        const { data: finalCheck } = await supabase.auth.getSession();
+        if (finalCheck.session) {
+          console.log('Found existing session!');
+          setStatus('success');
+          startCountdown();
+          return;
+        }
+
+        // If we still have no session, this is likely an error
+        throw new Error('Authentication completed but no valid session was established');
         
       } catch (err: any) {
         console.error('Auth callback error:', err);
@@ -124,9 +172,9 @@ const AuthCallback = () => {
                 <div className="flex justify-center mb-4">
                   <CheckCircle className="h-12 w-12 text-green-500" />
                 </div>
-                <CardTitle className="text-xl text-green-600">Authentication Successful!</CardTitle>
+                <CardTitle className="text-xl text-green-600">Welcome to Bookble!</CardTitle>
                 <CardDescription>
-                  Welcome to Bookble! Your account has been confirmed successfully.
+                  🎉 Your account has been successfully verified! You're all set to start discovering your next favorite book and connecting with fellow readers.
                 </CardDescription>
               </>
             )}
