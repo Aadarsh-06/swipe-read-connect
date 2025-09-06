@@ -86,17 +86,22 @@ const BookChat = () => {
   useEffect(() => {
     if (!user || !bookId) return;
 
+    console.log('🔧 BookChat useEffect triggered:', { userId: user.id, bookId });
+
     loadMessages();
     loadBookInfo();
 
     // Clear previous channel if any
     if (channelRef.current) {
+      console.log('🧹 Clearing previous BookChat channel');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     // Subscribe to realtime inserts
-    const channel = supabase.channel(`book-chat-${bookId}`);
+    const channelName = `book-chat-${bookId}`;
+    console.log('📡 Creating BookChat channel:', channelName);
+    const channel = supabase.channel(channelName);
 
     channel
       .on("postgres_changes", { 
@@ -105,6 +110,7 @@ const BookChat = () => {
         table: "book_chats",
         filter: `book_id=eq.${bookId}`
       }, async (payload) => {
+        console.log('📨 Received BookChat message:', payload);
         const row = payload.new as BookChatMessage;
         
         // Skip if this message already exists (avoid duplicates)
