@@ -115,8 +115,12 @@ const BookChat = () => {
         
         // Skip if this message already exists (avoid duplicates)
         setMessages((prev) => {
-          if (prev.some(m => m.id === row.id)) return prev;
+          if (prev.some(m => m.id === row.id)) {
+            console.log('📨 Skipping duplicate message:', row.id);
+            return prev;
+          }
           
+          console.log('📨 Adding new BookChat message:', row.id);
           // Add the message and fetch profile data if needed
           const newMessage: Message = {
             ...row,
@@ -211,11 +215,20 @@ const BookChat = () => {
       setMessages((prev) => {
         const idx = prev.findIndex((m) => m.id === tempId);
         if (idx !== -1) {
+          console.log('📤 Replacing temp message with real message:', tempId, '->', data.id);
           const clone = [...prev];
           clone[idx] = messageWithProfile;
           return clone.sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
+        } else {
+          console.log('📤 Temp message not found, checking for duplicates:', data.id);
+          // Check if real-time already added this message
+          if (prev.some(m => m.id === data.id)) {
+            console.log('📤 Message already exists from real-time, skipping');
+            return prev;
+          }
+          // Add the message if it doesn't exist
+          return [...prev, messageWithProfile].sort((a: any, b: any) => (a.created_at || '').localeCompare(b.created_at || ''));
         }
-        return prev;
       });
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
