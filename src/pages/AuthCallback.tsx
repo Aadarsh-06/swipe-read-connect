@@ -38,28 +38,53 @@ const AuthCallback = () => {
         // Handle email confirmation with token_hash (most common for email signup)
         if (hasTokenHash) {
           console.log('Found token_hash, processing email confirmation...');
+          
+          // Try to get session immediately
           const { data, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) {
             console.error('Session error:', sessionError);
             throw sessionError;
           }
+          
           if (data.session) {
             console.log('Email confirmation successful!');
             setStatus('success');
             startCountdown();
             return;
           }
-          // If no session yet, wait a moment and try again
-          setTimeout(async () => {
-            const { data: retryData } = await supabase.auth.getSession();
-            if (retryData.session) {
-              console.log('Email confirmation successful after retry!');
-              setStatus('success');
-              startCountdown();
-            } else {
-              throw new Error('Email confirmation completed but no session found');
-            }
-          }, 1000);
+          
+          // If no session yet, try to refresh the session
+          console.log('No immediate session, trying to refresh...');
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('Refresh error:', refreshError);
+            throw refreshError;
+          }
+          
+          if (refreshData.session) {
+            console.log('Email confirmation successful after refresh!');
+            setStatus('success');
+            startCountdown();
+            return;
+          }
+          
+          // If still no session, wait a moment and try again
+          console.log('Still no session, waiting and retrying...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const { data: retryData, error: retryError } = await supabase.auth.getSession();
+          if (retryError) {
+            console.error('Retry error:', retryError);
+            throw retryError;
+          }
+          
+          if (retryData.session) {
+            console.log('Email confirmation successful after retry!');
+            setStatus('success');
+            startCountdown();
+          } else {
+            throw new Error('Email confirmation completed but no session found. Please try signing in manually.');
+          }
           return;
         }
 

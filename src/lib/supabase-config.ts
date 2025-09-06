@@ -38,7 +38,10 @@ export const handleAuthError = (error: any): string => {
       return 'Please check your email and click the confirmation link before signing in.';
     }
     if (error.message.includes('Invalid redirect URL')) {
-      return 'Authentication configuration error. Please contact support.';
+      return 'The confirmation link is not properly configured. Please try signing in manually or contact support.';
+    }
+    if (error.message.includes('Email confirmation completed but no session found')) {
+      return 'Your email has been confirmed! Please try signing in with your email and password.';
     }
     if (error.message.includes('User not found')) {
       return 'No account found with this email address.';
