@@ -6,7 +6,6 @@ interface UseAuthResult {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -73,20 +72,6 @@ export const useAuth = (): UseAuthResult => {
     };
   }, []);
 
-  const signInWithGoogle = useMemo(() => {
-    return async () => {
-      await supabase.auth.signInWithOAuth({ 
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline'
-          },
-        }
-      });
-    };
-  }, []);
 
   const signOut = useMemo(() => {
     return async () => {
@@ -94,7 +79,7 @@ export const useAuth = (): UseAuthResult => {
     };
   }, []);
 
-  return { user, session, loading, signInWithGoogle, signOut };
+  return { user, session, loading, signOut };
 };
 
 async function ensureProfile(user: User): Promise<void> {
