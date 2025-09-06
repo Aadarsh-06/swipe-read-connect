@@ -22,12 +22,9 @@ export const supabase = createSupabaseClient();
 
 // Helper function to get the correct redirect URL
 export const getAuthRedirectUrl = (path: string = '/auth/callback') => {
-  // For production, always use the current origin
-  // For development, you can use localhost or a tunneling service like ngrok
-  const baseUrl = import.meta.env.DEV 
-    ? (import.meta.env.VITE_AUTH_REDIRECT_URL || 'http://localhost:8080')
-    : window.location.origin;
-  return `${baseUrl}${path}`;
+  // Always use the current origin for both development and production
+  // This ensures it works with Lovable's preview URLs
+  return `${window.location.origin}${path}`;
 };
 
 // Helper function for better error handling
