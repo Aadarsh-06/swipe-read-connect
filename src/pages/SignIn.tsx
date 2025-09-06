@@ -6,7 +6,7 @@ import { BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import booksBackground from "@/assets/books-background.jpg";
 import { useState } from "react";
-import { supabase, handleAuthError } from "@/lib/supabase-config";
+import { supabase, handleAuthError, getAuthRedirectUrl } from "@/lib/supabase-config";
 import { useAuth } from "@/hooks/useAuth";
 
 const SignIn = () => {
@@ -21,7 +21,23 @@ const SignIn = () => {
       setLoading(true);
       setError(null);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        // If email is not confirmed, try to resend confirmation
+        if (error.message.includes('Email not confirmed')) {
+          const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+              emailRedirectTo: getAuthRedirectUrl()
+            }
+          });
+          if (resendError) {
+            throw error; // Use original error if resend fails
+          }
+          throw new Error('Your email is not confirmed. We\'ve sent you a new confirmation email. Please check your inbox and click the link to confirm your account.');
+        }
+        throw error;
+      }
       if (data?.session) navigate("/");
     } catch (e: any) {
       setError(handleAuthError(e));

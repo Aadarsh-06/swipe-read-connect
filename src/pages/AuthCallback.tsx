@@ -32,6 +32,16 @@ const AuthCallback = () => {
         // Check for authentication errors first
         if (hasError) {
           const errorDescription = searchParams.get('error_description') || 'Authentication failed';
+          const errorCode = searchParams.get('error_code') || '';
+          
+          // Handle specific error cases
+          if (errorCode === 'otp_expired' || errorDescription.includes('expired')) {
+            throw new Error('Your confirmation link has expired. Please try signing in to request a new confirmation email, or sign up again.');
+          }
+          if (errorCode === 'access_denied') {
+            throw new Error('The confirmation link is no longer valid. Please try signing in to request a new confirmation email.');
+          }
+          
           throw new Error(errorDescription);
         }
 
@@ -234,7 +244,10 @@ const AuthCallback = () => {
                 <Button onClick={handleRetry} className="w-full">
                   Try Signing In Again
                 </Button>
-                <Button onClick={handleContinue} variant="outline" className="w-full">
+                <Button onClick={() => navigate('/signup', { replace: true })} variant="outline" className="w-full">
+                  Sign Up with New Email
+                </Button>
+                <Button onClick={handleContinue} variant="ghost" className="w-full">
                   Go to Home Page
                 </Button>
               </div>

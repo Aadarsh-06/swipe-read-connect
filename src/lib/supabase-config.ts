@@ -40,8 +40,14 @@ export const handleAuthError = (error: any): string => {
     if (error.message.includes('Invalid redirect URL')) {
       return 'The confirmation link is not properly configured. Please try signing in manually or contact support.';
     }
-    if (error.message.includes('Email confirmation completed but no session found')) {
-      return 'Your email has been confirmed! Please try signing in with your email and password.';
+    if (error.message.includes('Email link is invalid or has expired')) {
+      return 'Your confirmation link has expired. Please request a new confirmation email by trying to sign in, or sign up again with a fresh email.';
+    }
+    if (error.message.includes('otp_expired')) {
+      return 'Your confirmation link has expired. Please try signing in to request a new confirmation email, or sign up again.';
+    }
+    if (error.message.includes('access_denied')) {
+      return 'The confirmation link is no longer valid. Please try signing in to request a new confirmation email.';
     }
     if (error.message.includes('User not found')) {
       return 'No account found with this email address.';
