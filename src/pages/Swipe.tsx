@@ -1,7 +1,7 @@
 import { OptimizedBookCard } from "@/components/OptimizedBookCard";
 import { useBooks } from "@/hooks/useBooks";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ArrowLeft, Heart, Star, X, RotateCcw, Users, MessageCircle } from "lucide-react";
+import { BookOpen, ArrowLeft, Heart, X, RotateCcw, Users, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -14,7 +14,6 @@ const Swipe = () => {
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedCount, setMatchedCount] = useState(0);
   const [matchedUserNames, setMatchedUserNames] = useState<string[]>([]);
-  const [isSuperSwipe, setIsSuperSwipe] = useState(false);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
@@ -152,7 +151,7 @@ const Swipe = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-2xl">
-              {isSuperSwipe ? '⭐ Super Match! ⭐' : 'It\'s a match! 🎉'}
+              It's a match! 🎉
             </DialogTitle>
             <DialogDescription className="text-lg">
               {matchedUserNames.length > 0 ? (
@@ -161,15 +160,12 @@ const Swipe = () => {
                   <div className="font-semibold text-primary">
                     {matchedUserNames.map((name, index) => (
                       <div key={index} className="py-1">
-                        {isSuperSwipe ? '⭐ ' : '📚 '}{name}
+                        📚 {name}
                       </div>
                     ))}
                   </div>
                   <p className="text-sm opacity-80 mt-3">
-                    {isSuperSwipe 
-                      ? 'Your Super Swipe caught their attention! Start a conversation!' 
-                      : 'You both loved the same book. Start a conversation!'
-                    }
+                    You both loved the same book. Start a conversation!
                   </p>
                 </div>
               ) : (
@@ -178,8 +174,8 @@ const Swipe = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button variant="secondary" onClick={() => { setShowMatchDialog(false); setIsSuperSwipe(false); }}>Keep Swiping</Button>
-            <Button onClick={() => { setShowMatchDialog(false); setIsSuperSwipe(false); navigate('/community'); }}>See Matches</Button>
+            <Button variant="secondary" onClick={() => setShowMatchDialog(false)}>Keep Swiping</Button>
+            <Button onClick={() => { setShowMatchDialog(false); navigate('/community'); }}>See Matches</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -246,17 +242,6 @@ const Swipe = () => {
                 >
                   <X className="h-8 w-8" />
                 </button>
-                  <button
-                    onClick={() => {
-                      setIsSuperSwipe(true);
-                      swipeBook('right');
-                    }}
-                    disabled={isAnimating}
-                    className="w-16 h-16 bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-110 disabled:opacity-50 disabled:transform-none flex items-center justify-center animate-pulse hover:animate-bounce relative overflow-hidden group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-400 opacity-0 group-hover:opacity-30 animate-pulse"></div>
-                    <Star className="h-8 w-8 relative z-10 transition-transform duration-300" />
-                  </button>
                 <button
                   onClick={() => swipeBook('right')}
                   disabled={isAnimating}

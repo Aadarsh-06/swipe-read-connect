@@ -38,6 +38,7 @@ export const OptimizedBookCard = ({
 }: OptimizedBookCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showPlaceholder, setShowPlaceholder] = useState(false);
   
@@ -63,6 +64,7 @@ export const OptimizedBookCard = ({
     setIsDragging(true);
     const startX = e.clientX;
     const startY = e.clientY;
+    setStartPosition({ x: startX, y: startY });
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
@@ -72,14 +74,14 @@ export const OptimizedBookCard = ({
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
-      const threshold = 100;
+      const threshold = 80;
       
       if (Math.abs(dragOffset.x) > threshold) {
         onSwipe(dragOffset.x > 0 ? 'right' : 'left');
-      } else {
-        setDragOffset({ x: 0, y: 0 });
       }
+      
+      setIsDragging(false);
+      setDragOffset({ x: 0, y: 0 });
       
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -90,28 +92,30 @@ export const OptimizedBookCard = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     const touch = e.touches[0];
     const startX = touch.clientX;
     const startY = touch.clientY;
+    setStartPosition({ x: startX, y: startY });
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return;
+      if (!isDragging || e.touches.length === 0) return;
       const touch = e.touches[0];
       const deltaX = touch.clientX - startX;
       const deltaY = touch.clientY - startY;
       setDragOffset({ x: deltaX, y: deltaY });
     };
 
-    const handleTouchEnd = () => {
-      setIsDragging(false);
-      const threshold = 100;
+    const handleTouchEnd = (e: TouchEvent) => {
+      const threshold = 80;
       
       if (Math.abs(dragOffset.x) > threshold) {
         onSwipe(dragOffset.x > 0 ? 'right' : 'left');
-      } else {
-        setDragOffset({ x: 0, y: 0 });
       }
+      
+      setIsDragging(false);
+      setDragOffset({ x: 0, y: 0 });
       
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
