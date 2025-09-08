@@ -61,6 +61,7 @@ export const OptimizedBookCard = ({
   }, [book.id, isLoaded, imageLoadingState]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    console.log('Mouse down detected');
     setIsDragging(true);
     const startX = e.clientX;
     const startY = e.clientY;
@@ -74,10 +75,14 @@ export const OptimizedBookCard = ({
     };
 
     const handleMouseUp = () => {
+      console.log('Mouse up, dragOffset:', dragOffset);
       const threshold = 80;
       
       if (Math.abs(dragOffset.x) > threshold) {
+        console.log('Swipe detected:', dragOffset.x > 0 ? 'right' : 'left');
         onSwipe(dragOffset.x > 0 ? 'right' : 'left');
+      } else {
+        console.log('No swipe detected, offset too small:', dragOffset.x);
       }
       
       setIsDragging(false);
@@ -92,7 +97,7 @@ export const OptimizedBookCard = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
+    console.log('Touch start detected');
     setIsDragging(true);
     const touch = e.touches[0];
     const startX = touch.clientX;
@@ -101,6 +106,7 @@ export const OptimizedBookCard = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDragging || e.touches.length === 0) return;
+      e.preventDefault(); // Prevent scrolling during swipe
       const touch = e.touches[0];
       const deltaX = touch.clientX - startX;
       const deltaY = touch.clientY - startY;
@@ -108,10 +114,14 @@ export const OptimizedBookCard = ({
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      console.log('Touch end, dragOffset:', dragOffset);
       const threshold = 80;
       
       if (Math.abs(dragOffset.x) > threshold) {
+        console.log('Touch swipe detected:', dragOffset.x > 0 ? 'right' : 'left');
         onSwipe(dragOffset.x > 0 ? 'right' : 'left');
+      } else {
+        console.log('No touch swipe detected, offset too small:', dragOffset.x);
       }
       
       setIsDragging(false);
