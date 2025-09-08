@@ -220,7 +220,7 @@ const Swipe = () => {
                   Discover Your Next Read
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                  Drag or use buttons to swipe
+                  Swipe or use buttons below
                 </p>
               </div>
               
@@ -275,7 +275,7 @@ const Swipe = () => {
               </div>
               
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>💡 <strong>Pro tip:</strong> Drag the card or use the buttons to swipe!</p>
+                <p>💡 <strong>Pro tip:</strong> Swipe the card left (pass) or right (love)!</p>
               </div>
             </>
           )}

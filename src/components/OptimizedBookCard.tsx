@@ -89,6 +89,38 @@ export const OptimizedBookCard = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+      setDragOffset({ x: deltaX, y: deltaY });
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      const threshold = 100;
+      
+      if (Math.abs(dragOffset.x) > threshold) {
+        onSwipe(dragOffset.x > 0 ? 'right' : 'left');
+      } else {
+        setDragOffset({ x: 0, y: 0 });
+      }
+      
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
   const getTransform = () => {
     if (isAnimating && swipeDirection) {
       const direction = swipeDirection === 'right' ? 1 : -1;
@@ -120,6 +152,7 @@ export const OptimizedBookCard = ({
           transition: isAnimating ? 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease-out' : isDragging ? 'none' : 'transform 0.25s ease-out, opacity 0.25s ease-out'
         }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         {/* Swipe Indicators */}
         {isDragging && (
