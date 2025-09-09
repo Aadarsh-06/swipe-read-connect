@@ -104,7 +104,8 @@ const BookChat = () => {
     const channel = supabase.channel(channelName, {
       config: {
         broadcast: { self: false },
-        presence: { key: user.id }
+        presence: { key: user.id },
+        private: false
       }
     });
 

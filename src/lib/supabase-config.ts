@@ -5,6 +5,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yyupyzapcugtgj
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5dXB5emFwY3VndGdqenVidmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyODA0MjAsImV4cCI6MjA3MDg1NjQyMH0.OgjJNUmGKAIgVdIPWZ9e0w9DIRgVXxOzRCWp3yDa7MY";
 
 export const createSupabaseClient = () => {
+  console.log('🚀 Creating Supabase client with enhanced real-time config');
+  
   return createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       storage: localStorage,
@@ -16,11 +18,18 @@ export const createSupabaseClient = () => {
     },
     realtime: {
       params: {
-        eventsPerSecond: 50, // Increased from 10 for better chat performance
-        heartbeatIntervalMs: 30000, // 30 seconds
-        reconnectIntervalMs: 5000, // 5 seconds
+        eventsPerSecond: 100, // Increased for better performance
+        heartbeatIntervalMs: 15000, // 15 seconds (more frequent)
+        reconnectIntervalMs: 3000, // 3 seconds (faster reconnect)
+        timeout: 20000, // 20 second timeout
       },
+      log_level: import.meta.env.DEV ? 'debug' : 'info', // Enhanced logging in dev
     },
+    global: {
+      headers: {
+        'X-Client-Info': 'bookble-chat-app'
+      }
+    }
   });
 };
 
