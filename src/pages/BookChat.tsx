@@ -98,15 +98,10 @@ const BookChat = () => {
       channelRef.current = null;
     }
 
-    // Subscribe to realtime inserts with improved error handling
+    // Subscribe to realtime inserts - simplified approach
     const channelName = `book-chat-${bookId}`;
     console.log('📡 Creating BookChat channel:', channelName);
-    const channel = supabase.channel(channelName, {
-      config: {
-        broadcast: { self: false },
-        presence: { key: user.id }
-      }
-    });
+    const channel = supabase.channel(channelName);
 
     channel
       .on("postgres_changes", { 
@@ -118,39 +113,28 @@ const BookChat = () => {
         console.log('📨 Received BookChat message:', payload);
         const row = payload.new as BookChatMessage;
         
-        // Skip if this message already exists (avoid duplicates)
         setMessages((prev) => {
-          // Check for duplicates by ID or by content+timestamp for recent messages
-          const isDuplicate = prev.some(m => 
-            m.id === row.id || 
-            (m.content === row.content && 
-             m.user_id === row.user_id && 
-             Math.abs(new Date(m.created_at).getTime() - new Date(row.created_at).getTime()) < 5000)
-          );
-          
-          if (isDuplicate) {
-            console.log('📨 Skipping duplicate BookChat message:', row.id);
+          // Avoid duplicates
+          if (prev.some(m => m.id === row.id)) {
             return prev;
           }
-          
-          console.log('📨 Adding new BookChat message:', row.id);
-          // Add the message and fetch profile data if needed
-          const newMessage: Message = {
-            ...row,
-            profiles: { display_name: null, avatar_url: null }
-          };
           
           // Remove any pending messages with same content from same user
           const filteredPrev = prev.filter(m => 
             !(m.pending && m.content === row.content && m.user_id === row.user_id)
           );
           
+          const newMessage: Message = {
+            ...row,
+            profiles: { display_name: null, avatar_url: null }
+          };
+          
           return [...filteredPrev, newMessage].sort((a: any, b: any) => 
             (a.created_at || '').localeCompare(b.created_at || '')
           );
         });
         
-        // Fetch profile info for the new message asynchronously
+        // Fetch profile info asynchronously
         try {
           const { data: profile } = await supabase
             .from("profiles")
@@ -158,7 +142,6 @@ const BookChat = () => {
             .eq("user_id", row.user_id)
             .single();
           
-          // Update the message with profile info
           setMessages((prev) => 
             prev.map(m => 
               m.id === row.id 
@@ -171,28 +154,9 @@ const BookChat = () => {
         }
       })
       .subscribe((status) => {
-        console.log(`BookChat subscription status: ${status}`);
+        console.log(`📡 BookChat subscription status: ${status}`);
         if (status === 'SUBSCRIBED') {
-          console.log('BookChat real-time connected successfully');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('BookChat real-time connection failed:', status, '- attempting to reconnect');
-          // Attempt to reconnect after a delay
-          setTimeout(() => {
-            if (channelRef.current) {
-              console.log('Attempting to resubscribe BookChat channel');
-              channelRef.current.unsubscribe().then(() => {
-                channelRef.current?.subscribe();
-              });
-            }
-          }, 3000);
-        } else if (status === 'CLOSED') {
-          console.warn('BookChat channel closed, attempting to create new channel');
-          // Channel was closed, need to create a new one
-          setTimeout(() => {
-            if (!channelRef.current || channelRef.current.state !== 'joined') {
-              loadMessages(); // Reload messages as fallback
-            }
-          }, 2000);
+          console.log('✅ BookChat real-time connected successfully');
         }
       });
 
