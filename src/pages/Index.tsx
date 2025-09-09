@@ -28,7 +28,7 @@ const Index = () => {
             <span className="text-lg sm:text-xl font-bold">UnHinged</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <Link to="/community" className="hidden sm:block">
+            <Link to="/community" className="hidden md:block">
               <Button variant="ghost" size="sm">Community</Button>
             </Link>
             {user && profile ? (
@@ -47,9 +47,6 @@ const Index = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/community" className="sm:hidden">Community</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -84,7 +81,14 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
               <Link to="/swipe" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto text-lg sm:text-xl px-8 sm:px-12 py-6 sm:py-8 rounded-full shadow-2xl hover:scale-105 transition-all duration-300">
+                  <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
                   Start Swiping
+                </Button>
+              </Link>
+              <Link to="/community" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg sm:text-xl px-8 sm:px-12 py-6 sm:py-8 rounded-full border-2 border-accent/30 hover:border-accent hover:scale-105 transition-all duration-300 bg-accent/10">
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+                  Community
                 </Button>
               </Link>
               {!user && (
