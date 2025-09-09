@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase, handleAuthError, getAuthRedirectUrl } from "@/lib/supabase-config";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ const SignUp = () => {
         email, 
         password,
         options: { 
-          emailRedirectTo: getAuthRedirectUrl(),
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             signup_source: 'bookble_web',
             phone_number: phoneNumber
@@ -44,7 +44,7 @@ const SignUp = () => {
         setInfo("Success! Check your email for a confirmation link. Click the link in your email to activate your account, then you can sign in.");
       }
     } catch (e: any) {
-      setError(handleAuthError(e));
+      setError(e?.message || "An error occurred");
     } finally {
       setLoading(false);
     }
