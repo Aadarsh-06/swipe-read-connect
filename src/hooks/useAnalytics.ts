@@ -1,64 +1,20 @@
-import { track } from '@vercel/analytics';
+// Analytics disabled - using no-op functions
 
 /**
- * Custom hook for tracking important user events in UnHinged app
- * This helps measure user engagement and app performance
+ * Analytics hook with no-op functions (Vercel Analytics removed)
+ * This maintains the same API but doesn't track anything
  */
 export const useAnalytics = () => {
-  // Track user registration/sign up
-  const trackSignUp = (method: 'email' | 'google' = 'email') => {
-    track('User Sign Up', { method });
-  };
-
-  // Track successful sign in
-  const trackSignIn = (method: 'email' | 'google' = 'email') => {
-    track('User Sign In', { method });
-  };
-
-  // Track book swipe actions
-  const trackBookSwipe = (direction: 'left' | 'right', bookTitle?: string) => {
-    track('Book Swipe', { 
-      direction: direction === 'right' ? 'like' : 'pass',
-      book_title: bookTitle 
-    });
-  };
-
-  // Track when users get a match
-  const trackBookMatch = (bookTitle?: string, matchCount?: number) => {
-    track('Book Match', { 
-      book_title: bookTitle,
-      match_count: matchCount 
-    });
-  };
-
-  // Track chat message sending
-  const trackMessageSent = (chatType: 'private' | 'book_group') => {
-    track('Message Sent', { chat_type: chatType });
-  };
-
-  // Track when user opens community page
-  const trackCommunityVisit = () => {
-    track('Community Page Visit');
-  };
-
-  // Track profile completion/update
-  const trackProfileUpdate = () => {
-    track('Profile Updated');
-  };
-
-  // Track when user starts swiping
-  const trackSwipeSessionStart = () => {
-    track('Swipe Session Started');
-  };
-
-  // Track when user completes all available swipes
-  const trackSwipeSessionComplete = (totalSwipes: number, likes: number) => {
-    track('Swipe Session Completed', { 
-      total_swipes: totalSwipes,
-      total_likes: likes,
-      like_rate: totalSwipes > 0 ? Math.round((likes / totalSwipes) * 100) : 0
-    });
-  };
+  // No-op functions to prevent errors
+  const trackSignUp = (method: 'email' | 'google' = 'email') => {};
+  const trackSignIn = (method: 'email' | 'google' = 'email') => {};
+  const trackBookSwipe = (direction: 'left' | 'right', bookTitle?: string) => {};
+  const trackBookMatch = (bookTitle?: string, matchCount?: number) => {};
+  const trackMessageSent = (chatType: 'private' | 'book_group') => {};
+  const trackCommunityVisit = () => {};
+  const trackProfileUpdate = () => {};
+  const trackSwipeSessionStart = () => {};
+  const trackSwipeSessionComplete = (totalSwipes: number, likes: number) => {};
 
   return {
     trackSignUp,
@@ -73,39 +29,15 @@ export const useAnalytics = () => {
   };
 };
 
-// Direct tracking functions for use outside components
+// Direct tracking functions for use outside components (no-op)
 export const analytics = {
-  trackSignUp: (method: 'email' | 'google' = 'email') => {
-    track('User Sign Up', { method });
-  },
-  
-  trackSignIn: (method: 'email' | 'google' = 'email') => {
-    track('User Sign In', { method });
-  },
-  
-  trackBookSwipe: (direction: 'left' | 'right', bookTitle?: string) => {
-    track('Book Swipe', { 
-      direction: direction === 'right' ? 'like' : 'pass',
-      book_title: bookTitle 
-    });
-  },
-  
-  trackBookMatch: (bookTitle?: string, matchCount?: number) => {
-    track('Book Match', { 
-      book_title: bookTitle,
-      match_count: matchCount 
-    });
-  },
-  
-  trackMessageSent: (chatType: 'private' | 'book_group') => {
-    track('Message Sent', { chat_type: chatType });
-  },
-  
-  trackCommunityVisit: () => {
-    track('Community Page Visit');
-  },
-  
-  trackProfileUpdate: () => {
-    track('Profile Updated');
-  }
+  trackSignUp: (method: 'email' | 'google' = 'email') => {},
+  trackSignIn: (method: 'email' | 'google' = 'email') => {},
+  trackBookSwipe: (direction: 'left' | 'right', bookTitle?: string) => {},
+  trackBookMatch: (bookTitle?: string, matchCount?: number) => {},
+  trackMessageSent: (chatType: 'private' | 'book_group') => {},
+  trackCommunityVisit: () => {},
+  trackProfileUpdate: () => {},
+  trackSwipeSessionStart: () => {},
+  trackSwipeSessionComplete: (totalSwipes: number, likes: number) => {}
 };

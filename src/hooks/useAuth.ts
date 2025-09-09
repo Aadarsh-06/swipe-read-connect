@@ -14,6 +14,7 @@ export const useAuth = (): UseAuthResult => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+
   useEffect(() => {
     let isMounted = true;
     let profileCreationInProgress = new Set<string>();

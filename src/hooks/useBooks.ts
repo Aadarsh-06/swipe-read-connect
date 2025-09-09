@@ -63,7 +63,14 @@ export const useBooks = () => {
       }));
       
       console.log('📚 Books loaded from local collection, rendering immediately');
-      setBooks(initial);
+      
+      // Ensure we have books before setting state
+      if (initial.length > 0) {
+        setBooks(initial);
+        setError(null);
+      } else {
+        setError('No books available. Please try again.');
+      }
       setLoading(false);
 
       // Skip database sync during high traffic to prevent timeouts

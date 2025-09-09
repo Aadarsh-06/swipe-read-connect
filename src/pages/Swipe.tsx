@@ -19,6 +19,7 @@ const Swipe = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
+
   useEffect(() => {
     if (lastMatchUserIds && lastMatchUserIds.length > 0) {
       setMatchedCount(prev => prev + lastMatchUserIds.length);
@@ -66,7 +67,7 @@ const Swipe = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-500/10 via-background to-pink-500/10 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-violet-500/20 via-slate-900 to-pink-500/20 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <BookOpen className="h-16 w-16 text-primary mx-auto mb-6 animate-pulse" />
@@ -97,7 +98,7 @@ const Swipe = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-500/10 via-background to-pink-500/10 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-violet-500/20 via-slate-900 to-pink-500/20 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <BookOpen className="h-16 w-16 text-primary mx-auto mb-6 animate-pulse" />
@@ -112,7 +113,7 @@ const Swipe = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-500/10 via-background to-orange-500/10 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-red-500/20 via-slate-900 to-orange-500/20 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <X className="h-10 w-10 text-red-500" />
@@ -130,9 +131,22 @@ const Swipe = () => {
     );
   }
 
+  // Fallback for extreme black screen cases
+  if (!authLoading && !loading && !currentBook && !error && totalBooks === 0) {
+    return (
+      <div className="min-h-screen bg-slate-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-2">Loading books...</h2>
+          <p className="text-gray-300">If this persists, please refresh the page</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!hasMoreBooks) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-500/10 via-background to-blue-500/10 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-500/20 via-slate-900 to-blue-500/20 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
             <BookOpen className="h-12 w-12 text-white" />
@@ -162,7 +176,7 @@ const Swipe = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-500/10 via-background via-50% to-pink-500/10 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-violet-500/20 via-slate-900 via-50% to-pink-500/20 overflow-hidden">
       {/* Match dialog */}
       <Dialog open={showMatchDialog} onOpenChange={setShowMatchDialog}>
         <DialogContent>
@@ -205,7 +219,7 @@ const Swipe = () => {
       </div>
 
       {/* Header */}
-      <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border/50 z-50">
+      <header className="fixed top-0 w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-700/50 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
