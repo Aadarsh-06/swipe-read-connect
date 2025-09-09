@@ -13,6 +13,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -23,7 +24,7 @@ const SignUp = () => {
       setLoading(true);
       setError(null);
       setInfo(null);
-      if (!email || !password) throw new Error("Email and password are required");
+      if (!email || !password || !phoneNumber) throw new Error("Email, password, and phone number are required");
       if (password !== confirm) throw new Error("Passwords do not match");
       const { data, error } = await supabase.auth.signUp({ 
         email, 
@@ -31,7 +32,8 @@ const SignUp = () => {
         options: { 
           emailRedirectTo: getAuthRedirectUrl(),
           data: {
-            signup_source: 'bookble_web'
+            signup_source: 'bookble_web',
+            phone_number: phoneNumber
           }
         }
       });
@@ -68,6 +70,10 @@ const SignUp = () => {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="Enter your email" className="bg-input/80" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input id="phoneNumber" type="tel" placeholder="Enter your phone number" className="bg-input/80" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
