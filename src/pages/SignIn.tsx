@@ -98,11 +98,6 @@ const SignIn = () => {
             <Button className="w-full" size="lg" disabled={loading} onClick={onSubmit}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
-            <div className="text-center">
-              <Button variant="link" className="text-sm">
-                Forgot your password?
-              </Button>
-            </div>
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Don't have an account? </span>
               <Link to="/signup" className="text-primary hover:underline">

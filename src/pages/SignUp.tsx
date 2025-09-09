@@ -15,6 +15,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [instagramId, setInstagramId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -25,7 +26,7 @@ const SignUp = () => {
       setLoading(true);
       setError(null);
       setInfo(null);
-      if (!email || !password || !phoneNumber) throw new Error("Email, password, and phone number are required");
+      if (!email || !password || !phoneNumber || !instagramId) throw new Error("Email, password, phone number, and Instagram ID are required");
       if (password !== confirm) throw new Error("Passwords do not match");
       const { data, error } = await supabase.auth.signUp({ 
         email, 
@@ -34,7 +35,8 @@ const SignUp = () => {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             signup_source: 'unhinged_web',
-            phone_number: phoneNumber
+            phone_number: phoneNumber,
+            instagram_id: instagramId
           }
         }
       });
@@ -67,7 +69,7 @@ const SignUp = () => {
               <span className="text-2xl font-bold">UnHinged</span>
             </div>
             <CardTitle className="text-2xl">Create an account</CardTitle>
-            <CardDescription>Join and start matching with readers</CardDescription>
+            <CardDescription>Join and start matching with readers (Instagram ID required)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -77,6 +79,10 @@ const SignUp = () => {
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input id="phoneNumber" type="tel" placeholder="Enter your phone number" className="bg-input/80" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagramId">Instagram ID *</Label>
+              <Input id="instagramId" type="text" placeholder="@your_instagram" className="bg-input/80" value={instagramId} onChange={(e) => setInstagramId(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

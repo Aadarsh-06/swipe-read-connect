@@ -105,10 +105,14 @@ async function ensureProfile(user: User): Promise<void> {
       const emailLocal = user.email ? String(user.email).split('@')[0] : undefined;
       const displayName = meta.preferred_username || meta.user_name || meta.full_name || emailLocal || "Reader";
       const avatarUrl = meta.avatar_url || null;
+      const phoneNumber = meta.phone_number || null;
+      const instagramId = meta.instagram_id || null;
       const { error: insertError } = await supabase.from("profiles").insert({
         user_id: user.id,
         display_name: displayName,
         avatar_url: avatarUrl,
+        phone_number: phoneNumber,
+        instagram_id: instagramId,
       });
       if (insertError) {
         console.warn("Profile insert error:", insertError.message);
