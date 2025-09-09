@@ -163,7 +163,7 @@ const AuthCallback = () => {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold">Bookble</span>
+              <span className="text-2xl font-bold">UnHinged</span>
             </div>
             
             {status === 'loading' && (
@@ -183,7 +183,7 @@ const AuthCallback = () => {
                 <div className="flex justify-center mb-4">
                   <CheckCircle className="h-12 w-12 text-green-500" />
                 </div>
-                <CardTitle className="text-xl text-green-600">Welcome to Bookble!</CardTitle>
+                <CardTitle className="text-xl text-green-600">Welcome to UnHinged!</CardTitle>
                 <CardDescription>
                   🎉 Your account has been successfully verified! You're all set to start discovering your next favorite book and connecting with fellow readers.
                 </CardDescription>
@@ -210,7 +210,7 @@ const AuthCallback = () => {
                   Redirecting you to the home page in {countdown} seconds...
                 </p>
                 <Button onClick={handleContinue} className="w-full">
-                  Continue to Bookble
+                  Continue to UnHinged
                 </Button>
               </>
             )}

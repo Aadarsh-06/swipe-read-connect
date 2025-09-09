@@ -32,7 +32,7 @@ const SignUp = () => {
         options: { 
           emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
-            signup_source: 'bookble_web',
+            signup_source: 'unhinged_web',
             phone_number: phoneNumber
           }
         }
@@ -61,7 +61,7 @@ const SignUp = () => {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold">Bookble</span>
+              <span className="text-2xl font-bold">UnHinged</span>
             </div>
             <CardTitle className="text-2xl">Create an account</CardTitle>
             <CardDescription>Join and start matching with readers</CardDescription>

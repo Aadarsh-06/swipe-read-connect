@@ -27,7 +27,7 @@ export const createSupabaseClient = () => {
     },
     global: {
       headers: {
-        'X-Client-Info': 'bookble-chat-app'
+        'X-Client-Info': 'unhinged-chat-app'
       }
     }
   });

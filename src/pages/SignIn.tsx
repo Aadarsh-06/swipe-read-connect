@@ -59,7 +59,7 @@ const SignIn = () => {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold">Bookble</span>
+              <span className="text-2xl font-bold">UnHinged</span>
             </div>
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
             <CardDescription>

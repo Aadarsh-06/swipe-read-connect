@@ -25,7 +25,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <span className="text-lg sm:text-xl font-bold">Bookble</span>
+            <span className="text-lg sm:text-xl font-bold">UnHinged</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             <Link to="/community" className="hidden sm:block">
@@ -155,11 +155,11 @@ const Index = () => {
           <div className="flex justify-center items-center">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              <span className="text-lg sm:text-xl font-bold">Bookble</span>
+              <span className="text-lg sm:text-xl font-bold">UnHinged</span>
             </div>
           </div>
           <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t text-center text-sm sm:text-base text-muted-foreground">
-            <p>Bookble</p>
+            <p>UnHinged</p>
           </div>
         </div>
       </footer>
