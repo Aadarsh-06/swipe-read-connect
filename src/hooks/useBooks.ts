@@ -212,8 +212,12 @@ export const useBooks = () => {
     const liked = direction === 'right';
 
     if (current) {
-      // Track swipe analytics
-      analytics.trackBookSwipe(direction, current["Book-Title"]);
+      // Track swipe analytics (safe)
+      try {
+        analytics.trackBookSwipe(direction, current["Book-Title"]);
+      } catch (error) {
+        console.warn('Analytics tracking failed:', error);
+      }
       
       // Persist in the background without blocking animations
       persistPreference(current, liked).catch(() => {});
