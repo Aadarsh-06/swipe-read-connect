@@ -16,7 +16,9 @@ export const createSupabaseClient = () => {
     },
     realtime: {
       params: {
-        eventsPerSecond: 10,
+        eventsPerSecond: 50, // Increased from 10 for better chat performance
+        heartbeatIntervalMs: 30000, // 30 seconds
+        reconnectIntervalMs: 5000, // 5 seconds
       },
     },
   });

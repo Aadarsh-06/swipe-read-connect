@@ -98,10 +98,15 @@ const BookChat = () => {
       channelRef.current = null;
     }
 
-    // Subscribe to realtime inserts
+    // Subscribe to realtime inserts with improved error handling
     const channelName = `book-chat-${bookId}`;
     console.log('📡 Creating BookChat channel:', channelName);
-    const channel = supabase.channel(channelName);
+    const channel = supabase.channel(channelName, {
+      config: {
+        broadcast: { self: false },
+        presence: { key: user.id }
+      }
+    });
 
     channel
       .on("postgres_changes", { 
@@ -115,8 +120,16 @@ const BookChat = () => {
         
         // Skip if this message already exists (avoid duplicates)
         setMessages((prev) => {
-          if (prev.some(m => m.id === row.id)) {
-            console.log('📨 Skipping duplicate message:', row.id);
+          // Check for duplicates by ID or by content+timestamp for recent messages
+          const isDuplicate = prev.some(m => 
+            m.id === row.id || 
+            (m.content === row.content && 
+             m.user_id === row.user_id && 
+             Math.abs(new Date(m.created_at).getTime() - new Date(row.created_at).getTime()) < 5000)
+          );
+          
+          if (isDuplicate) {
+            console.log('📨 Skipping duplicate BookChat message:', row.id);
             return prev;
           }
           
@@ -127,7 +140,12 @@ const BookChat = () => {
             profiles: { display_name: null, avatar_url: null }
           };
           
-          return [...prev, newMessage].sort((a: any, b: any) => 
+          // Remove any pending messages with same content from same user
+          const filteredPrev = prev.filter(m => 
+            !(m.pending && m.content === row.content && m.user_id === row.user_id)
+          );
+          
+          return [...filteredPrev, newMessage].sort((a: any, b: any) => 
             (a.created_at || '').localeCompare(b.created_at || '')
           );
         });
@@ -157,7 +175,24 @@ const BookChat = () => {
         if (status === 'SUBSCRIBED') {
           console.log('BookChat real-time connected successfully');
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('BookChat real-time connection failed:', status);
+          console.warn('BookChat real-time connection failed:', status, '- attempting to reconnect');
+          // Attempt to reconnect after a delay
+          setTimeout(() => {
+            if (channelRef.current) {
+              console.log('Attempting to resubscribe BookChat channel');
+              channelRef.current.unsubscribe().then(() => {
+                channelRef.current?.subscribe();
+              });
+            }
+          }, 3000);
+        } else if (status === 'CLOSED') {
+          console.warn('BookChat channel closed, attempting to create new channel');
+          // Channel was closed, need to create a new one
+          setTimeout(() => {
+            if (!channelRef.current || channelRef.current.state !== 'joined') {
+              loadMessages(); // Reload messages as fallback
+            }
+          }, 2000);
         }
       });
 

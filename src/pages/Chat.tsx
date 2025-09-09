@@ -58,25 +58,6 @@ const Chat = () => {
 
     console.log('🔧 Chat useEffect triggered:', { userId: user.id, recipientId });
 
-    // Test real-time connection first
-    const testChannel = supabase.channel('test-connection');
-    testChannel
-      .on('broadcast', { event: 'test' }, (payload) => {
-        console.log('✅ Real-time test successful:', payload);
-      })
-      .subscribe((status) => {
-        console.log('🧪 Test channel status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time connection is working!');
-          // Send a test message
-          testChannel.send({
-            type: 'broadcast',
-            event: 'test',
-            payload: { message: 'Real-time test' }
-          });
-        }
-      });
-
     // Initial load
     loadMessages();
 
@@ -133,7 +114,19 @@ const Chat = () => {
         if (status !== "SUBSCRIBED") {
           console.warn('⚠️ Chat real-time disconnected, falling back to polling');
           if (!pollRef.current) {
-            pollRef.current = setInterval(loadMessages, 2000);
+            pollRef.current = setInterval(loadMessages, 3000);
+          }
+          
+          // Attempt to reconnect for certain error states
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setTimeout(() => {
+              if (channelRef.current) {
+                console.log('Attempting to resubscribe Chat channel');
+                channelRef.current.unsubscribe().then(() => {
+                  channelRef.current?.subscribe();
+                });
+              }
+            }, 5000);
           }
         } else {
           console.log('✅ Chat real-time connected successfully');
@@ -162,8 +155,6 @@ const Chat = () => {
         clearInterval(pollRef.current);
         pollRef.current = null;
       }
-      // Clean up test channel
-      supabase.removeChannel(testChannel);
     };
   }, [user, recipientId]);
 

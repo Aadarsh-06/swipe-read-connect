@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase-config';
 
 export type RealtimeStatus = 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
@@ -7,17 +7,29 @@ interface UseRealtimeStatusResult {
   status: RealtimeStatus;
   isConnected: boolean;
   lastConnected: Date | null;
+  reconnect: () => void;
 }
 
 export const useRealtimeStatus = (channelName?: string): UseRealtimeStatusResult => {
   const [status, setStatus] = useState<RealtimeStatus>('CONNECTING');
   const [lastConnected, setLastConnected] = useState<Date | null>(null);
+  const [statusChannel, setStatusChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
+
+  const reconnect = useCallback(() => {
+    console.log('Attempting to reconnect realtime...');
+    if (statusChannel) {
+      statusChannel.unsubscribe().then(() => {
+        statusChannel.subscribe();
+      });
+    }
+  }, [statusChannel]);
 
   useEffect(() => {
     // Monitor Supabase connection status
-    const statusChannel = supabase.channel('realtime-status');
+    const channel = supabase.channel(channelName ? `realtime-status-${channelName}` : 'realtime-status');
+    setStatusChannel(channel);
     
-    statusChannel
+    channel
       .subscribe((channelStatus) => {
         switch (channelStatus) {
           case 'SUBSCRIBED':
@@ -26,9 +38,19 @@ export const useRealtimeStatus = (channelName?: string): UseRealtimeStatusResult
             break;
           case 'CHANNEL_ERROR':
             setStatus('ERROR');
+            // Auto-reconnect after error
+            setTimeout(() => {
+              console.log('Auto-reconnecting after error...');
+              reconnect();
+            }, 3000);
             break;
           case 'TIMED_OUT':
             setStatus('DISCONNECTED');
+            // Auto-reconnect after timeout
+            setTimeout(() => {
+              console.log('Auto-reconnecting after timeout...');
+              reconnect();
+            }, 5000);
             break;
           case 'CLOSED':
             setStatus('DISCONNECTED');
@@ -43,13 +65,15 @@ export const useRealtimeStatus = (channelName?: string): UseRealtimeStatusResult
       });
 
     return () => {
-      supabase.removeChannel(statusChannel);
+      supabase.removeChannel(channel);
+      setStatusChannel(null);
     };
-  }, [channelName]);
+  }, [channelName, reconnect]);
 
   return {
     status,
     isConnected: status === 'CONNECTED',
-    lastConnected
+    lastConnected,
+    reconnect
   };
 };
