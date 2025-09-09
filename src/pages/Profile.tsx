@@ -14,6 +14,7 @@ const Profile = () => {
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [avatar, setAvatar] = useState(profile?.avatar_url || "");
   const [instagramId, setInstagramId] = useState(profile?.instagram_id || "");
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || "");
   const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
@@ -32,7 +33,8 @@ const Profile = () => {
       await updateProfile({ 
         display_name: displayName, 
         avatar_url: avatar || null,
-        instagram_id: instagramId
+        instagram_id: instagramId,
+        phone_number: phoneNumber
       });
     } finally {
       setSaving(false);
@@ -87,6 +89,15 @@ const Profile = () => {
                   onChange={(e) => setInstagramId(e.target.value)} 
                   placeholder="@your_instagram" 
                   required
+                />
+              </div>
+              <div>
+                <Label>Phone Number</Label>
+                <Input 
+                  value={phoneNumber} 
+                  onChange={(e) => setPhoneNumber(e.target.value)} 
+                  placeholder="Your phone number" 
+                  type="tel"
                 />
               </div>
             </div>

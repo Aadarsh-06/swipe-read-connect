@@ -141,6 +141,7 @@ export type Database = {
           display_name: string | null
           id: string
           instagram_id: string | null
+          phone_number: string | null
           updated_at: string
           user_id: string
         }
@@ -151,6 +152,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           instagram_id?: string | null
+          phone_number?: string | null
           updated_at?: string
           user_id: string
         }
@@ -161,6 +163,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           instagram_id?: string | null
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
         }

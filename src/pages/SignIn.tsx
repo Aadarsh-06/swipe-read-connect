@@ -6,7 +6,7 @@ import { BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import booksBackground from "@/assets/books-background.jpg";
 import { useState } from "react";
-import { supabase, handleAuthError, getAuthRedirectUrl } from "@/lib/supabase-config";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const SignIn = () => {
@@ -28,7 +28,7 @@ const SignIn = () => {
             type: 'signup',
             email: email,
             options: {
-              emailRedirectTo: getAuthRedirectUrl()
+              emailRedirectTo: `${window.location.origin}/auth/callback`
             }
           });
           if (resendError) {
@@ -40,7 +40,7 @@ const SignIn = () => {
       }
       if (data?.session) navigate("/");
     } catch (e: any) {
-      setError(handleAuthError(e));
+      setError(e?.message || "An error occurred");
     } finally {
       setLoading(false);
     }

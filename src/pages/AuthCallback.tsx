@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase, handleAuthError } from "@/lib/supabase-config";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, BookOpen, Loader2 } from "lucide-react";
@@ -121,7 +121,7 @@ const AuthCallback = () => {
         
       } catch (err: any) {
         console.error('Auth callback error:', err);
-        setError(handleAuthError(err));
+        setError(err?.message || "An authentication error occurred");
         setStatus('error');
       }
     };
