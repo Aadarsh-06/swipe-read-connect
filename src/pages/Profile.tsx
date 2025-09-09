@@ -17,12 +17,22 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
+    // Validate required fields
+    if (!displayName.trim()) {
+      alert('Display name is required');
+      return;
+    }
+    if (!instagramId.trim()) {
+      alert('Instagram ID is required');
+      return;
+    }
+    
     try {
       setSaving(true);
       await updateProfile({ 
-        display_name: displayName || null, 
+        display_name: displayName, 
         avatar_url: avatar || null,
-        instagram_id: instagramId || null
+        instagram_id: instagramId
       });
     } finally {
       setSaving(false);
@@ -58,16 +68,26 @@ const Profile = () => {
             </Avatar>
             <div className="flex-1 grid gap-2">
               <div>
-                <Label>Display name</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your username" />
+                <Label>Display name *</Label>
+                <Input 
+                  value={displayName} 
+                  onChange={(e) => setDisplayName(e.target.value)} 
+                  placeholder="Your username" 
+                  required
+                />
               </div>
               <div>
                 <Label>Avatar URL</Label>
                 <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://…" />
               </div>
               <div>
-                <Label>Instagram ID</Label>
-                <Input value={instagramId} onChange={(e) => setInstagramId(e.target.value)} placeholder="@your_instagram" />
+                <Label>Instagram ID *</Label>
+                <Input 
+                  value={instagramId} 
+                  onChange={(e) => setInstagramId(e.target.value)} 
+                  placeholder="@your_instagram" 
+                  required
+                />
               </div>
             </div>
           </div>

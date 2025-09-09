@@ -159,7 +159,7 @@ const Index = () => {
             </div>
           </div>
           <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t text-center text-sm sm:text-base text-muted-foreground">
-            <p>&copy; 2024 Bookble. All rights reserved.</p>
+            <p>Bookble</p>
           </div>
         </div>
       </footer>
