@@ -8,6 +8,7 @@ import booksBackground from "@/assets/books-background.jpg";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/hooks/useAnalytics";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -38,7 +39,10 @@ const SignIn = () => {
         }
         throw error;
       }
-      if (data?.session) navigate("/");
+      if (data?.session) {
+        analytics.trackSignIn('email');
+        navigate("/");
+      }
     } catch (e: any) {
       setError(e?.message || "An error occurred");
     } finally {

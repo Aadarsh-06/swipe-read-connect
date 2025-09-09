@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const Index = lazy(() => import("./pages/Index"));
 const Swipe = lazy(() => import("./pages/Swipe"));
@@ -42,6 +44,10 @@ const App = () => (
           </Routes>
         </Suspense>
       </BrowserRouter>
+      {/* Vercel Analytics - tracks page views, user interactions, and custom events */}
+      <Analytics debug={import.meta.env.DEV} />
+      {/* Vercel Speed Insights - tracks Core Web Vitals and performance metrics */}
+      <SpeedInsights debug={import.meta.env.DEV} />
     </TooltipProvider>
   </QueryClientProvider>
 );

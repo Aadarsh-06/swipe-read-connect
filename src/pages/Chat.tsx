@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -184,6 +185,8 @@ const Chat = () => {
 
     if (!error && data) {
       console.log('✅ Message sent successfully:', data);
+      // Track message sent
+      analytics.trackMessageSent('private');
       // Reconcile pending temp with actual row
       setMessages((prev) => {
         const idx = prev.findIndex((m) => m.id === tempId);

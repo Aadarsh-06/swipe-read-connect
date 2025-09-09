@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -205,6 +206,9 @@ const BookChat = () => {
       .single();
 
     if (!error && data) {
+      // Track message sent
+      analytics.trackMessageSent('book_group');
+      
       // Get the user's profile for the message
       const { data: profile } = await supabase
         .from("profiles")

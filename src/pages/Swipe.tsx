@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/hooks/useAnalytics";
 
 const Swipe = () => {
   const { currentBook, hasMoreBooks, loading, error, swipeBook, totalBooks, currentIndex, isAnimating, swipeDirection, lastMatchUserIds, likesCount, getOptimalImageUrl, isImageLoaded, getImageLoadingState } = useBooks();
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [matchedCount, setMatchedCount] = useState(0);
   const [matchedUserNames, setMatchedUserNames] = useState<string[]>([]);
+  const [sessionStartTracked, setSessionStartTracked] = useState(false);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
@@ -46,6 +48,21 @@ const Swipe = () => {
     if (totalBooks === 0) return 0;
     return Math.round(((likesCount || 0) / totalBooks) * 100);
   }, [likesCount, totalBooks]);
+
+  // Track swipe session start
+  useEffect(() => {
+    if (currentBook && !sessionStartTracked && !loading) {
+      analytics.trackSwipeSessionStart();
+      setSessionStartTracked(true);
+    }
+  }, [currentBook, sessionStartTracked, loading]);
+
+  // Track swipe session completion
+  useEffect(() => {
+    if (!hasMoreBooks && currentIndex > 0 && totalBooks > 0) {
+      analytics.trackSwipeSessionComplete(currentIndex, likesCount || 0);
+    }
+  }, [hasMoreBooks, currentIndex, totalBooks, likesCount]);
 
   if (authLoading) {
     return (

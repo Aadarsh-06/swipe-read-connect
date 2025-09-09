@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useImagePreloader } from './useImagePreloader';
 import { lacBookCollection, syncLacBooks, CuratedBook, getRandomizedBooks } from '@/data/lacBooks';
+import { analytics } from './useAnalytics';
 
 interface Book {
   id: number;
@@ -145,11 +146,17 @@ export const useBooks = () => {
         .select('user1_id,user2_id,book_id')
         .eq('book_id', resolvedId)
         .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
-      if (!matchesError && matchesData) {
+        if (!matchesError && matchesData) {
         const others = matchesData
           .map(m => (m.user1_id === user.id ? m.user2_id : m.user1_id))
           .filter(Boolean);
-        setLastMatchUserIds(others.length > 0 ? others : null);
+        const hasMatches = others.length > 0;
+        setLastMatchUserIds(hasMatches ? others : null);
+        
+        // Track match analytics
+        if (hasMatches) {
+          analytics.trackBookMatch(book["Book-Title"], others.length);
+        }
       }
     }
     return null;
@@ -165,6 +172,9 @@ export const useBooks = () => {
     const liked = direction === 'right';
 
     if (current) {
+      // Track swipe analytics
+      analytics.trackBookSwipe(direction, current["Book-Title"]);
+      
       // Persist in the background without blocking animations
       persistPreference(current, liked).catch(() => {});
       if (liked) setLikesCount(prev => prev + 1);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/hooks/useAnalytics";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,6 +30,10 @@ const Community = () => {
 
   useEffect(() => {
     if (!user) return;
+    
+    // Track community page visit
+    analytics.trackCommunityVisit();
+    
     const load = async () => {
       setLoading(true);
       

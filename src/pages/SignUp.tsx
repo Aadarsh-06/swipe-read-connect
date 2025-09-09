@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { analytics } from "@/hooks/useAnalytics";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,8 +40,10 @@ const SignUp = () => {
       });
       if (error) throw error;
       if (data.session) {
+        analytics.trackSignUp('email');
         navigate("/");
       } else {
+        analytics.trackSignUp('email');
         setInfo("Success! Check your email for a confirmation link. Click the link in your email to activate your account, then you can sign in.");
       }
     } catch (e: any) {
